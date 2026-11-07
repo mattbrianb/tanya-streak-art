@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en-ZA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tanya Streak Art · Original oil paintings, Durban North</title>
+<meta name="description" content="Original oil paintings of roses, hydrangeas, sweet peas and sunflowers by Tanya Streak, painted in her Durban North home studio. Buy an original or commission your own.">
+<meta property="og:title" content="Tanya Streak Art · Original oil paintings">
+<meta property="og:description" content="Florals in oils, painted in Durban North. Buy an original or commission your own.">
+<meta property="og:image" content="/static/og.jpg">
+<meta name="theme-color" content="#FBEDE8">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gloock&family=Figtree:wght@400;500;600&family=Mrs+Saint+Delafield&display=swap">
+<link rel="stylesheet" href="/css/wallroom.css">
+<link rel="stylesheet" href="/css/site.css">
+</head>
+<body>
+<div id="site-header"></div>
+
+<main id="main">
+  <section class="hero" aria-labelledby="hero-h">
+    <div class="wrap">
+      <div>
+        <h1 id="hero-h">Original oil paintings, made in Durban North</h1>
+        <p>Garden flowers painted from life with a loaded brush and a palette knife. Each painting is a one-off original, signed and ready to hang.</p>
+        <div class="actions">
+          <a class="btn" href="/shop/">Shop originals</a>
+          <a class="btn ghost" href="/commissions/">Commission a painting</a>
+        </div>
+      </div>
+      <figure id="hero-fig"></figure>
+    </div>
+  </section>
+
+  <div class="band">
+    <section class="sec wrap" aria-labelledby="orig-h">
+      <div class="section-head">
+        <h2 id="orig-h">Original paintings</h2>
+        <p>One of each, painted in the home studio. Sold work stays here so you can see where the brush has been.</p>
+      </div>
+      <div class="chips" role="group" aria-label="Show">
+        <button type="button" class="chip" data-f="all" aria-pressed="true">All</button>
+        <button type="button" class="chip" data-f="available" aria-pressed="false">Available</button>
+        <button type="button" class="chip" data-f="sold" aria-pressed="false">Sold</button>
+      </div>
+      <div class="grid" id="grid"><p class="loading">Hanging the paintings…</p></div>
+      <div class="shop-foot" style="display:flex;justify-content:center;flex-wrap:wrap;gap:12px"><a class="btn ghost" href="/gallery/">See the whole gallery</a><a class="btn" href="/walk/"><svg viewBox="0 0 24 24" aria-hidden="true" style="fill:none;stroke:currentColor;stroke-width:1.6"><path d="M3 20V8l9-4 9 4v12"/><path d="M8 20v-6h8v6"/><path d="M3 20h18"/></svg>Walk the gallery in 3D</a></div>
+    </section>
+  </div>
+
+  <section class="sec studio" aria-labelledby="studio-h">
+    <div class="wrap">
+      <div>
+        <h2 id="studio-h">From the studio</h2>
+        <p>Tanya paints with a loaded brush and a palette knife, so the petals stand up off the canvas. Photos flatten it a little; up close it looks like this.</p>
+        <p>Now and then she goes big, with mixed-media botanicals in acrylic, Posca and real gold leaf.</p>
+      </div>
+      <div class="textures">
+        <img src="/static/detail-roses.jpg" alt="Close-up of loose pink rose petals in oil paint">
+        <img src="/static/detail-jug-blooms.jpg" alt="Close-up of raised pink blossoms in thick oil paint">
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" style="padding-top:24px" aria-labelledby="com-h">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 id="com-h">Commission a painting</h2>
+        <p>Your favourite flowers and colours, painted to fit your wall. Three sizes, measured on the longest side.</p>
+      </div>
+      <div class="tiers" id="tiers"></div>
+      <div class="cta"><a class="btn" href="/commissions/">Start a commission</a></div>
+    </div>
+  </section>
+
+  <section class="sec about" style="padding-top:24px" aria-labelledby="about-h">
+    <div class="wrap">
+      <div class="arch"><img src="/static/tanya.jpg" width="1000" height="1094" alt="Tanya Streak, smiling, in her garden" loading="lazy" style="object-position:50% 30%"></div>
+      <div>
+        <h2 id="about-h">Meet Tanya</h2>
+        <p>Tanya Streak paints florals in oils from her home studio in Durban North: roses in jam jars, hydrangeas, sweet peas and sunflowers, picked from the garden and the market.</p>
+        <p>Small pieces can come with a little display easel; larger ones arrive ready to hang. New work shows up first here and on <a class="link" href="https://www.instagram.com/tanyastreakart/" target="_blank" rel="noopener">Instagram</a>.</p>
+        <p class="sig" aria-hidden="true">Tanya</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div id="site-footer"></div>
+
+<script src="/js/wallroom.js"></script>
+<script src="/js/rooms.js"></script>
+<script src="/js/site.js"></script>
+<script>
+Site.boot('/').then(function (T) {
+  var E = Site.esc, P = T.paintings;
+  var hero = P.filter(function (p) { return p.status === 'available'; })[0] || P[0];
+  if (hero) {
+    var z = Site.sizesFor(hero)[0];
+    document.getElementById('hero-fig').innerHTML = '<a href="' + hero.url + '"><img src="' + E(hero.images[0].lg) + '" alt="' + E(hero.title) + ', ' + E(hero.medium.toLowerCase()) + '" fetchpriority="high"></a>' +
+      '<figcaption>' + E(hero.title) + ', ' + E(hero.medium.toLowerCase()) + (hero.status === 'sold' ? ' · sold' : (hero.price ? ' · ' + Site.priceText(z) : '')) + '</figcaption>';
+  }
+  var grid = document.getElementById('grid');
+  function show(f) {
+    var list = P.filter(function (p) { return f === 'all' || p.status === f; }).slice(0, 6);
+    grid.innerHTML = list.length ? list.map(function (p, i) { return Site.cardHTML(p, { eager: i < 3 }); }).join('')
+      : '<p class="loading">' + (f === 'available' ? 'Everything has sold for now. Join the list below to hear first about new work.' : 'Nothing here yet.') + '</p>';
+    document.querySelectorAll('.chip').forEach(function (c) { c.setAttribute('aria-pressed', String(c.dataset.f === f)); });
+  }
+  document.querySelector('.chips').addEventListener('click', function (e) { var c = e.target.closest('.chip'); if (c) show(c.dataset.f); });
+  show('all');
+
+  var notes = ['For a shelf or bedside table', 'Over a console or desk', 'Above the sofa or bed'];
+  document.getElementById('tiers').innerHTML = T.tiers.map(function (t, i) {
+    return '<div class="tier"><p class="size-label">' + E(t.label) + '</p><h3>' + t.longEdge + ' cm</h3><p class="amount">' + Site.rand(t.price) + '</p><p class="note">' + (notes[i] || '') + '</p></div>';
+  }).join('');
+}).catch(function () {
+  document.getElementById('grid').innerHTML = '<p class="loading">The paintings didn’t load. Please refresh the page.</p>';
+});
+</script>
+</body>
+</html>

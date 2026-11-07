@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en-ZA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Painting · Tanya Streak Art</title>
+<meta name="description" content="An original oil painting by Tanya Streak, Durban North.">
+<meta property="og:title" content="Tanya Streak Art">
+<meta property="og:description" content="An original oil painting by Tanya Streak, Durban North.">
+<meta property="og:image" content="/static/og.jpg">
+<meta property="og:type" content="product">
+<meta name="theme-color" content="#FBEDE8">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gloock&family=Figtree:wght@400;500;600&family=Mrs+Saint+Delafield&display=swap">
+<link rel="stylesheet" href="/css/wallroom.css">
+<link rel="stylesheet" href="/css/site.css">
+</head>
+<body>
+<div id="site-header"></div>
+<main id="main" class="wrap">
+  <div id="piece"><p class="loading">Loading the painting…</p></div>
+</main>
+<div class="band" id="more" hidden>
+  <section class="sec wrap" aria-labelledby="more-h">
+    <div class="section-head"><h2 id="more-h">More from the studio</h2></div>
+    <div class="more-grid" id="more-list"></div>
+    <div class="shop-foot"><a class="btn ghost" href="/gallery/">See the whole gallery</a></div>
+  </section>
+</div>
+<div id="site-footer"></div>
+<script src="/js/wallroom.js"></script>
+<script src="/js/rooms.js"></script>
+<script src="/js/site.js"></script>
+<script>
+Site.boot('/gallery/').then(function (T) {
+  var slug = decodeURIComponent(location.pathname.replace(/^\/painting\/?/, '').replace(/\/$/, '')) || new URLSearchParams(location.search).get('p');
+  var p = T.paintings.filter(function (x) { return x.id === slug; })[0];
+  var box = document.getElementById('piece'), E = Site.esc;
+  if (!p) {
+    document.title = 'Painting not found · Tanya Streak Art';
+    box.innerHTML = '<div class="empty" style="margin:72px auto"><h3>This painting isn’t here any more</h3><p>It may have been taken down. Have a look through the gallery, or ask Tanya about it on WhatsApp.</p>' +
+      '<div class="acts"><a class="btn" href="/gallery/">Go to the gallery</a></div></div>';
+    return;
+  }
+  var z = Site.sizesFor(p)[0], sold = p.status === 'sold';
+  document.title = p.title + ' · Tanya Streak Art';
+  box.innerHTML = '<nav class="crumbs" aria-label="Breadcrumb"><a href="/gallery/">Gallery</a> / <span aria-current="page">' + E(p.title) + '</span></nav>' +
+    '<article class="piece">' +
+      '<div class="viewer">' +
+        '<button type="button" class="main frame" data-wallroom="' + p.id + '" aria-label="See ' + E(p.title) + ' on a wall">' + (sold ? '<span class="pill">Sold</span>' : '') +
+          '<span class="mat"><img id="main-img" src="' + E(p.images[0].lg) + '" alt="' + E(p.title) + ', ' + E(p.medium.toLowerCase()) + ', by Tanya Streak" fetchpriority="high"></span></button>' +
+        '<div class="room-slot" hidden></div>' +
+        '<div class="thumbs" role="group" aria-label="More photos">' + (p.images.length > 1 || window.Rooms ? p.images.map(function (im, i) {
+          return '<button type="button" data-i="' + i + '" aria-label="Photo ' + (i + 1) + ' of ' + p.images.length + '"' + (i ? '' : ' aria-current="true"') + '><img src="' + E(im.md) + '" alt=""></button>';
+        }).join('') : '') + '</div>' +
+      '</div>' +
+      '<div class="info">' +
+        '<h1>' + E(p.title) + '</h1>' +
+        '<p class="price' + (sold ? ' sold' : '') + '">' + (sold ? 'Sold' : Site.priceText(z)) + '</p>' +
+        '<dl class="spec"><dt>Size</dt><dd>' + (p.w ? E(z.dims) : 'Ask Tanya') + '</dd><dt>Medium</dt><dd>' + E(p.medium) + '</dd><dt>Artist</dt><dd>Tanya Streak, Durban North</dd></dl>' +
+        (p.description ? '<p class="desc">' + E(p.description) + '</p>' : '') +
+        '<div class="acts">' +
+          (sold ? '<a class="btn" href="' + Site.similarLink(p) + '" target="_blank" rel="noopener">' + Site.icon.wa + 'Ask for one like it</a>'
+                : '<a class="btn" href="' + Site.orderLink(p, z) + '" target="_blank" rel="noopener">' + Site.icon.wa + 'Order on WhatsApp</a>') +
+          '<button type="button" class="btn ghost" data-wallroom="' + p.id + '">' + Site.icon.wall + 'View on a wall</button>' +
+        '</div>' +
+        '<p class="note">' + (sold ? 'This one has found a home. Tanya can paint something in the same spirit, in the size you need.' : 'One of a kind. Collect in Durban North or courier anywhere in South Africa.') + '</p>' +
+        '<div class="folds">' +
+          '<details class="fold"><summary>How ordering works</summary><div>Tap Order on WhatsApp and your message arrives with the painting and price filled in. Tanya confirms it is available and sends payment details. Once paid, it is yours.</div></details>' +
+          '<details class="fold"><summary>Collection &amp; delivery</summary><div>Collect in Durban North, or have it couriered anywhere in South Africa. Tanya quotes the courier cost when you order and wraps every painting carefully.</div></details>' +
+          '<details class="fold"><summary>Caring for an oil painting</summary><div>Oil paint keeps curing for months. Hang it out of direct sun and away from steam, and dust now and then with a soft, dry brush. Never use cleaning sprays.</div></details>' +
+        '</div>' +
+      '</div>' +
+    '</article>';
+  var thumbs = box.querySelector('.thumbs'), main = box.querySelector('.viewer .main'), slot = box.querySelector('.room-slot'), mainImg = document.getElementById('main-img');
+  thumbs.addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    var room = b.dataset.room === '1';
+    main.hidden = room; slot.hidden = !room;
+    if (!room) mainImg.src = p.images[+b.dataset.i].lg;
+    thumbs.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-current', String(x === b)); });
+  });
+  // "In a room": the painting hung at true size in a room that suits it.
+  function addRoom() {
+    if (!window.Rooms) return;
+    var html = Rooms.scene(p, mainImg); if (!html) return;
+    slot.innerHTML = html;
+    var bg = slot.querySelector('.room-bg').getAttribute('src');
+    thumbs.insertAdjacentHTML('beforeend', '<button type="button" class="room-thumb" data-room="1" aria-label="See it in a room"><img src="' + bg + '" alt=""></button>');
+  }
+  if (mainImg.complete && mainImg.naturalWidth) addRoom(); else mainImg.addEventListener('load', addRoom, { once: true });
+  var others = T.paintings.filter(function (x) { return x !== p; }).slice(0, 4);
+  if (others.length) {
+    document.getElementById('more').hidden = false;
+    document.getElementById('more-list').innerHTML = others.map(function (o) { return Site.cardHTML(o); }).join('');
+  }
+}).catch(function () {
+  document.getElementById('piece').innerHTML = '<p class="loading">The painting didn’t load. Please refresh the page.</p>';
+});
+</script>
+</body>
+</html>

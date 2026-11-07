@@ -1,0 +1,14 @@
+# Cloudflare Pages project for tanyastreakart.
+# The two IDs below are filled in once during setup (see SETUP.md).
+name = "tanya-streak-art"
+pages_build_output_dir = "./public"
+compatibility_date = "2026-10-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "tanya-art"
+database_id = "00000000-0000-0000-0000-000000000000"
+
+[[kv_namespaces]]
+binding = "IMAGES"
+id = "00000000000000000000000000000000"

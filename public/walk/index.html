@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en-ZA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Walk the gallery · Tanya Streak Art</title>
+<meta name="description" content="Step inside Tanya Streak's gallery: walk around a bright room where her oil paintings hang at their true size, then open any painting up close.">
+<meta name="theme-color" content="#FBEDE8">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gloock&family=Figtree:wght@400;500;600&family=Mrs+Saint+Delafield&display=swap">
+<link rel="stylesheet" href="/css/wallroom.css">
+<link rel="stylesheet" href="/css/site.css">
+<link rel="stylesheet" href="/css/walk.css">
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+</head>
+<body class="walk-page">
+<div id="site-header"></div>
+<main id="main">
+  <div class="wk-bar">
+    <div class="wk-bar-in">
+      <h1 class="wk-h">Walk the gallery</h1>
+      <a class="wk-back" href="/gallery/"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="1.5" width="5" height="5"/><rect x="9.5" y="1.5" width="5" height="5"/><rect x="1.5" y="9.5" width="5" height="5"/><rect x="9.5" y="9.5" width="5" height="5"/></svg>Back to the gallery grid</a>
+    </div>
+  </div>
+
+  <section class="wk" id="wk" aria-label="3D gallery room" data-state="loading">
+    <canvas class="wk-canvas" id="wk-canvas" tabindex="0" role="application" aria-roledescription="3D gallery"
+      aria-label="Tanya Streak's gallery room. Use the arrow keys or W A S D to walk, or the Previous and Next painting buttons to visit each painting." aria-describedby="wk-help"></canvas>
+    <p class="sr" id="wk-help">Up and down arrows walk forward and back, left and right arrows turn, A and D step sideways. Enter opens the painting you are facing. Escape closes it again.</p>
+    <p class="sr" id="wk-live" aria-live="polite"></p>
+
+    <div class="wk-top">
+      <span class="wk-count" id="wk-count" aria-live="off"></span>
+      <button type="button" class="wk-round wk-fs" id="wk-fs" aria-label="Enter full screen" aria-pressed="false">
+        <svg class="i-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg>
+        <svg class="i-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4v5H4M20 9h-5V4M15 20v-5h5M4 15h5v5"/></svg>
+      </button>
+    </div>
+
+    <button type="button" class="wk-tour wk-prev" id="wk-prev" aria-label="Previous painting">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4l-8 8 8 8"/></svg>
+    </button>
+    <button type="button" class="wk-tour wk-next" id="wk-next" aria-label="Next painting">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4l8 8-8 8"/></svg>
+    </button>
+
+    <div class="wk-pad" id="wk-pad" role="group" aria-label="Walk controls">
+      <button type="button" data-move="turnL" aria-label="Turn left"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7H15a5 5 0 010 10h-3"/><path d="M12 4L9 7l3 3"/></svg></button>
+      <button type="button" data-move="fwd" aria-label="Walk forward"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button>
+      <button type="button" data-move="turnR" aria-label="Turn right"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 7H9a5 5 0 000 10h3"/><path d="M12 4l3 3-3 3"/></svg></button>
+      <button type="button" data-move="left" aria-label="Step left"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></button>
+      <button type="button" data-move="back" aria-label="Step back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"/></svg></button>
+      <button type="button" data-move="right" aria-label="Step right"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+    </div>
+
+    <div class="wk-hint" id="wk-hint" aria-hidden="true">Drag to look around · tap the floor to walk · tap a painting to see it close</div>
+
+    <aside class="wk-info" id="wk-info" aria-labelledby="wk-i-title" data-open="false" inert>
+      <button type="button" class="wk-close" id="wk-close" aria-label="Close and keep walking">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+      <p class="wk-i-status" id="wk-i-status"></p>
+      <h2 class="wk-i-title" id="wk-i-title"></h2>
+      <p class="wk-i-meta" id="wk-i-meta"></p>
+      <p class="wk-i-price" id="wk-i-price"></p>
+      <p class="wk-i-blurb" id="wk-i-blurb"></p>
+      <div class="wk-i-acts">
+        <a class="btn" id="wk-i-order" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#wa"/></svg><span>Order on WhatsApp</span></a>
+        <button type="button" class="btn ghost" id="wk-i-wall"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="2" width="11" height="8.5"/><path d="M1 14h14M5 14v-1.5h6V14"/></svg>See it on a wall</button>
+        <a class="link wk-i-details" id="wk-i-details">View details</a>
+      </div>
+    </aside>
+
+    <div class="wk-load" id="wk-load" role="status" aria-live="polite">
+      <div class="wk-load-in">
+        <span class="wk-load-mark" aria-hidden="true">Tanya Streak Art</span>
+        <p class="wk-load-t">Hanging the paintings <span id="wk-pct">0%</span></p>
+        <span class="wk-load-bar" aria-hidden="true"><i id="wk-bar"></i></span>
+      </div>
+    </div>
+
+    <div class="wk-fallback" id="wk-fallback" hidden>
+      <div class="wk-fallback-in">
+        <h2>The 3D room can&rsquo;t open here</h2>
+        <p id="wk-fallback-t">This browser or device doesn&rsquo;t support 3D graphics (WebGL), so the walk-through can&rsquo;t load. Every painting is still in the gallery.</p>
+        <a class="btn" href="/gallery/">Browse the gallery</a>
+      </div>
+    </div>
+  </section>
+</main>
+<div id="site-footer"></div>
+<script src="/js/wallroom.js"></script>
+<script src="/js/site.js"></script>
+<script type="module" src="/js/walk.js"></script>
+</body>
+</html>

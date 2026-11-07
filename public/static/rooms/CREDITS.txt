@@ -1,0 +1,17 @@
+Room photos used for the "in a room" previews.
+All from Unsplash, under the Unsplash License (free for commercial use, no attribution required;
+credit kept here as good practice). panelled-dining.jpg was cropped to remove artwork at the right edge.
+
+bright-white-room.jpg  https://unsplash.com/photos/ladder-stool-and-snake-plant-DLD5LvnFblU
+beige-vases.jpg        https://unsplash.com/photos/a-vase-and-a-vase-on-a-counter-X3encuFJAN8
+grey-fireplace.jpg     https://unsplash.com/photos/white-brick-fireplace-on-hardwood-WS59rnZkmpc
+panelled-dining.jpg    https://unsplash.com/photos/elegant-dining-room-with-large-plant-and-table-pjQAGRNehew
+sunlit-dining.jpg      https://unsplash.com/photos/wooden-table-and-chairs-bathed-in-sunlight-ozDFb-HMi6w
+grey-sofa.jpg          https://unsplash.com/photos/a-couch-with-pillows-and-a-potted-plant-o5GiFSl5iYw
+oak-sideboard.jpg      https://unsplash.com/photos/a-couch-and-a-table-in-a-room-bqiKlANLuAY
+sofa-corner.jpg        https://unsplash.com/photos/brown-bed-pillows-RIb19_YSUX0
+sage-cabinet.jpg       https://unsplash.com/photos/green-plant-on-white-cabinet-HstwCJX0jT4
+fluted-dresser.jpg     https://unsplash.com/photos/a-white-cabinet-in-a-room-with-a-beige-wall-sYL0iLgCRk4
+cream-mantel.jpg       https://unsplash.com/photos/a-couple-of-vases-sitting-on-top-of-a-mantle-qu_My_4DPxw
+sunlit-shelf.jpg       https://unsplash.com/photos/a-couple-of-vases-sitting-on-top-of-a-shelf-w7lBBeIOHoc
+white-shelf.jpg        https://unsplash.com/photos/a-shelf-with-two-vases-and-a-lamp-on-it-1GdYuu3cM_w

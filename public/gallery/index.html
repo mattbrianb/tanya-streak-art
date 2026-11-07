@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en-ZA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gallery · Tanya Streak Art</title>
+<meta name="description" content="Tanya Streak's oil paintings: available originals and work that has found a home. Florals in oils from Durban North.">
+<meta name="theme-color" content="#FBEDE8">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gloock&family=Figtree:wght@400;500;600&family=Mrs+Saint+Delafield&display=swap">
+<link rel="stylesheet" href="/css/wallroom.css">
+<link rel="stylesheet" href="/css/site.css">
+</head>
+<body>
+<div id="site-header"></div>
+<main id="main">
+  <section class="page-head wrap" aria-labelledby="h">
+    <h1 class="page-title" id="h">The gallery</h1>
+    <p class="lede">Everything off Tanya&rsquo;s easel: the paintings still looking for a home and the ones that have found one. Tap &ldquo;View on a wall&rdquo; to see any painting hanging at its real size.</p>
+    <p style="margin-top:24px"><a class="btn" href="/walk/"><svg viewBox="0 0 24 24" aria-hidden="true" style="fill:none;stroke:currentColor;stroke-width:1.6"><path d="M3 20V8l9-4 9 4v12"/><path d="M8 20v-6h8v6"/><path d="M3 20h18"/></svg>Walk through the gallery in 3D</a></p>
+  </section>
+  <div class="band" style="margin-top:56px">
+    <section class="sec wrap" aria-label="Paintings">
+      <div class="chips" role="group" aria-label="Show" id="chips">
+        <button type="button" class="chip" data-f="all" aria-pressed="true">All<span class="n" data-n="all"></span></button>
+        <button type="button" class="chip" data-f="available" aria-pressed="false">Available<span class="n" data-n="available"></span></button>
+        <button type="button" class="chip" data-f="sold" aria-pressed="false">Sold<span class="n" data-n="sold"></span></button>
+      </div>
+      <div class="grid" id="grid"><p class="loading">Hanging the paintings…</p></div>
+    </section>
+  </div>
+</main>
+<div id="site-footer"></div>
+<script src="/js/wallroom.js"></script>
+<script src="/js/rooms.js"></script>
+<script src="/js/site.js"></script>
+<script>
+Site.boot('/gallery/').then(function (T) {
+  var P = T.paintings, grid = document.getElementById('grid');
+  var counts = { all: P.length, available: 0, sold: 0 };
+  P.forEach(function (p) { counts[p.status]++; });
+  document.querySelectorAll('[data-n]').forEach(function (n) { n.textContent = counts[n.dataset.n]; });
+  function show(f) {
+    var list = P.filter(function (p) { return f === 'all' || p.status === f; });
+    grid.innerHTML = list.length ? list.map(function (p, i) { return Site.cardHTML(p, { eager: i < 3 }); }).join('')
+      : '<p class="loading">' + (f === 'available' ? 'Nothing for sale right now. New work is on the easel.' : 'Nothing here yet.') + '</p>';
+    document.querySelectorAll('#chips .chip').forEach(function (c) { c.setAttribute('aria-pressed', String(c.dataset.f === f)); });
+  }
+  document.getElementById('chips').addEventListener('click', function (e) { var c = e.target.closest('.chip'); if (c) show(c.dataset.f); });
+  var m = location.search.match(/[?&]show=(available|sold)/);
+  show(m ? m[1] : 'all');
+}).catch(function () {
+  document.getElementById('grid').innerHTML = '<p class="loading">The paintings didn’t load. Please refresh the page.</p>';
+});
+</script>
+</body>
+</html>

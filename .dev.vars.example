@@ -1,0 +1,2 @@
+ADMIN_PASSWORD=choose-a-local-password
+SESSION_SECRET=any-long-random-string-for-local-dev

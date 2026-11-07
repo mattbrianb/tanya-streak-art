@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en-ZA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shop originals · Tanya Streak Art</title>
+<meta name="description" content="Original oil paintings by Tanya Streak for sale. One of a kind, painted in Durban North, ordered on WhatsApp.">
+<meta name="theme-color" content="#FBEDE8">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gloock&family=Figtree:wght@400;500;600&family=Mrs+Saint+Delafield&display=swap">
+<link rel="stylesheet" href="/css/wallroom.css">
+<link rel="stylesheet" href="/css/site.css">
+</head>
+<body>
+<div id="site-header"></div>
+<main id="main">
+  <section class="page-head wrap" aria-labelledby="h">
+    <h1 class="page-title" id="h">Original paintings for sale</h1>
+    <p class="lede">Each painting is one of a kind. Tap Order on WhatsApp and your message arrives with the painting, size and price filled in; Tanya replies to arrange payment and collection or courier.</p>
+  </section>
+  <section class="sec wrap" style="padding-top:56px" aria-label="Paintings for sale">
+    <div class="grid" id="grid"><p class="loading">Hanging the paintings…</p></div>
+  </section>
+  <section class="sec wrap" style="padding-top:0" aria-label="Ordering">
+    <div class="info-rows">
+      <div><h3>How ordering works</h3><p>Tap Order on WhatsApp under any painting. Tanya confirms it is still available, sends payment details, and holds it for you once paid.</p></div>
+      <div><h3>Collection &amp; delivery</h3><p>Collect in Durban North, or have it couriered anywhere in South Africa. Courier costs are quoted when you order.</p></div>
+      <div><h3>Caring for it</h3><p>Hang it out of direct sun and away from steam, and dust now and then with a soft, dry brush.</p></div>
+    </div>
+  </section>
+</main>
+<div id="site-footer"></div>
+<script src="/js/wallroom.js"></script>
+<script src="/js/rooms.js"></script>
+<script src="/js/site.js"></script>
+<script>
+Site.boot('/shop/').then(function (T) {
+  var forSale = T.paintings.filter(function (p) { return p.status === 'available'; });
+  var el = document.getElementById('grid');
+  if (!forSale.length) {
+    el.outerHTML = '<div class="empty"><h3>Everything has sold for now</h3><p>New paintings are on the easel. Join the list below to hear first, or ask Tanya to paint one just for you.</p>' +
+      '<div class="acts"><a class="btn" href="/commissions/">Commission a painting</a><a class="btn ghost" href="/gallery/">See past work</a></div></div>';
+    return;
+  }
+  el.innerHTML = forSale.map(function (p, i) { return Site.cardHTML(p, { eager: i < 3 }); }).join('');
+}).catch(function () {
+  document.getElementById('grid').innerHTML = '<p class="loading">The paintings didn’t load. Please refresh the page.</p>';
+});
+</script>
+</body>
+</html>

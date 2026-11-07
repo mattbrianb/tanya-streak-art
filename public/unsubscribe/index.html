@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en-ZA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Unsubscribe · Tanya Streak Art</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#FBEDE8">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gloock&family=Figtree:wght@400;500;600&family=Mrs+Saint+Delafield&display=swap">
+<link rel="stylesheet" href="/css/wallroom.css">
+<link rel="stylesheet" href="/css/site.css">
+</head>
+<body>
+<div id="site-header"></div>
+<main id="main" class="wrap">
+  <div class="empty" style="margin:72px auto">
+    <h1 class="page-title" style="font-size:34px">Leave the email list</h1>
+    <p>Enter the address you signed up with and it will be removed straight away.</p>
+    <form class="subform" id="unsub" novalidate>
+      <label class="sr" for="u-e">Your email</label>
+      <input class="field" type="email" id="u-e" name="email" autocomplete="email" inputmode="email" placeholder="Your email address" required>
+      <button class="btn" type="submit">Unsubscribe</button>
+      <p class="msg" role="status" aria-live="polite"></p>
+    </form>
+  </div>
+</main>
+<div id="site-footer"></div>
+<script src="/js/wallroom.js"></script>
+<script src="/js/site.js"></script>
+<script>
+Site.boot('');
+var f = document.getElementById('unsub'), m = f.querySelector('.msg');
+var q = new URLSearchParams(location.search).get('email'); if (q) f.email.value = q;
+f.addEventListener('submit', function (e) {
+  e.preventDefault(); m.className = 'msg';
+  fetch('/api/unsubscribe', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email: f.email.value.trim() }) })
+    .then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error(d.error); }); })
+    .then(function () { m.className = 'msg ok'; m.textContent = 'Done. That address is off the list.'; f.email.value = ''; })
+    .catch(function (err) { m.className = 'msg bad'; m.textContent = err.message === 'Failed to fetch' ? 'Couldn’t connect. Please try again.' : err.message; });
+});
+</script>
+</body>
+</html>

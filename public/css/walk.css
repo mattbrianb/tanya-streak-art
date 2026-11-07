@@ -1,0 +1,108 @@
+/* Walk the gallery: a 3D room in Blush & Linen. Page-specific styles for /walk/. */
+.wk-bar{border-bottom:1px solid #F1E3DD;background:var(--white)}
+.wk-bar-in{max-width:none;margin:0 auto;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.wk-h{font-size:24px}
+.wk-back{display:inline-flex;align-items:center;gap:8px;min-height:44px;font-size:14.5px;color:var(--rose-text);text-decoration:none;border-bottom:1px solid transparent;transition:border-color .2s}
+.wk-back:hover{border-color:var(--rose)}
+.wk-back svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.3}
+
+/* the immersive stage */
+.wk{position:relative;overflow:hidden;background:#F2EAE3;height:max(460px,calc(100svh - var(--wk-top,210px)));user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;font-family:'Figtree',system-ui,sans-serif}
+.wk.is-fs{position:fixed;inset:0;z-index:70;height:100%;height:100dvh}
+.wk:fullscreen{height:100%}
+.wk-canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab;outline:none}
+.wk-canvas.is-dragging{cursor:grabbing}
+.wk-canvas.is-art{cursor:zoom-in}
+.wk-canvas.is-floor{cursor:pointer}
+.wk-canvas:focus-visible{outline:2px solid var(--rose-text);outline-offset:-4px}
+
+/* shared floating surfaces: white, rounded, soft shadow, rose icons */
+.wk-round,.wk-tour,.wk-pad button,.wk-close{display:grid;place-items:center;padding:0;cursor:pointer;color:var(--rose-text);background:rgba(255,252,249,.94);border:1px solid rgba(239,207,198,.9);box-shadow:0 1px 1px rgba(58,46,42,.06),0 10px 24px -12px rgba(58,46,42,.38);transition:background-color .2s,color .2s,border-color .2s,transform .2s var(--ease),opacity .4s ease;touch-action:none;-webkit-touch-callout:none}
+.wk-round:hover,.wk-tour:hover,.wk-pad button:hover,.wk-close:hover{background:#fff;border-color:var(--rose);color:var(--rose-deep)}
+.wk-round:active,.wk-tour:active,.wk-pad button:active,.wk-pad button.is-held{transform:scale(.95);background:var(--blush)}
+.wk svg{fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+
+.wk-top{position:absolute;top:14px;left:16px;right:16px;z-index:3;display:flex;justify-content:center;align-items:center;pointer-events:none}
+.wk-count{min-width:72px;text-align:center;padding:7px 16px;border-radius:999px;background:rgba(255,252,249,.9);border:1px solid rgba(239,207,198,.9);font-size:13px;font-weight:500;letter-spacing:.04em;font-variant-numeric:tabular-nums;color:var(--ink);box-shadow:0 8px 20px -14px rgba(58,46,42,.4)}
+.wk-count:empty{visibility:hidden}
+.wk-fs{position:absolute;right:0;top:0;width:48px;height:48px;border-radius:12px;pointer-events:auto}
+.wk-fs svg{width:20px;height:20px}
+.wk-fs .i-off,.wk.is-fs .wk-fs .i-on{display:none}
+.wk.is-fs .wk-fs .i-off{display:block}
+
+.wk-tour{position:absolute;top:50%;z-index:3;width:52px;height:88px;margin-top:-44px;border-radius:14px}
+.wk-tour svg{width:22px;height:22px}
+.wk-prev{left:16px}
+.wk-next{right:16px}
+
+.wk-pad{position:absolute;left:50%;bottom:18px;z-index:3;transform:translateX(-50%);display:grid;grid-template-columns:repeat(3,52px);gap:8px;transition:opacity .35s ease,transform .5s var(--ease)}
+.wk-pad button{width:52px;height:52px;border-radius:12px}
+.wk-pad svg{width:22px;height:22px}
+
+.wk-hint{position:absolute;left:50%;top:76px;z-index:3;transform:translateX(-50%);max-width:calc(100% - 32px);padding:10px 18px;border-radius:999px;background:rgba(58,46,42,.78);color:#FFFCF9;font-size:13.5px;letter-spacing:.01em;text-align:center;pointer-events:none;transition:opacity .8s ease}
+.wk-hint.is-gone{opacity:0}
+
+/* painting card */
+.wk-info{position:absolute;z-index:4;right:20px;top:76px;width:360px;max-height:calc(100% - 96px);overflow:auto;background:var(--white);border:1px solid var(--blush-line);border-radius:8px;padding:28px 28px 26px;box-shadow:0 24px 50px -24px rgba(58,46,42,.5);transform:translateX(calc(100% + 40px));opacity:0;visibility:hidden;transition:transform .6s var(--ease),opacity .35s ease,visibility 0s linear .6s;user-select:text;-webkit-user-select:text}
+.wk-info[data-open="true"]{transform:none;opacity:1;visibility:visible;transition:transform .6s var(--ease),opacity .35s ease,visibility 0s}
+.wk-close{position:absolute;top:10px;right:10px;width:44px;height:44px;border-radius:50%;box-shadow:none;border-color:transparent;background:transparent;color:var(--ink)}
+.wk-close svg{width:18px;height:18px}
+.wk-i-status{font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--rose-text);display:flex;align-items:center;gap:8px}
+.wk-i-status .dot{width:9px;height:9px;border-radius:50%;background:var(--rose-text)}
+.wk-i-title{margin-top:10px;font-size:30px;padding-right:28px}
+.wk-i-meta{margin-top:8px;font-size:14.5px;color:var(--ink-soft)}
+.wk-i-price{margin-top:12px;font:400 26px/1.2 'Gloock',Georgia,serif}
+.wk-i-price.sold{color:var(--rose-text)}
+.wk-i-blurb{margin-top:12px;font-size:14.5px;color:var(--ink-soft)}
+.wk-i-blurb:empty{display:none}
+.wk-i-acts{display:grid;gap:10px;margin-top:20px}
+.wk-i-acts .btn{width:100%}
+.wk-i-details{justify-self:center;margin-top:4px;font-size:14.5px;min-height:40px;display:inline-flex;align-items:center}
+
+/* loading + fallback */
+.wk-load,.wk-fallback{position:absolute;inset:0;z-index:6;display:grid;place-items:center;background:linear-gradient(#FBF6F2,#F3EAE3);transition:opacity .7s ease,visibility 0s linear .7s}
+.wk[data-state="ready"] .wk-load{opacity:0;visibility:hidden}
+.wk-load-in,.wk-fallback-in{text-align:center;padding:24px}
+.wk-load-mark{display:block;font:400 54px/1.1 'Mrs Saint Delafield',cursive;color:var(--ink)}
+.wk-load-t{margin-top:10px;font-size:14px;color:var(--ink-soft)}
+.wk-load-t span{font-variant-numeric:tabular-nums;color:var(--rose-text);font-weight:600}
+.wk-load-bar{display:block;width:200px;height:2px;margin:16px auto 0;background:var(--blush-line);border-radius:2px;overflow:hidden}
+.wk-load-bar i{display:block;height:100%;width:0;background:var(--rose-text);transition:width .3s ease}
+.wk-fallback{z-index:7}
+.wk-fallback-in{max-width:440px;background:var(--white);border:1px solid var(--blush-line);border-radius:6px;padding:40px 30px}
+.wk-fallback h2{font-size:28px}
+.wk-fallback p{margin:12px 0 24px;color:var(--ink-soft)}
+.wk[data-state="loading"] .wk-top,.wk[data-state="loading"] .wk-tour,.wk[data-state="loading"] .wk-pad,.wk[data-state="loading"] .wk-hint,
+.wk[data-state="error"] .wk-top,.wk[data-state="error"] .wk-tour,.wk[data-state="error"] .wk-pad,.wk[data-state="error"] .wk-hint,.wk[data-state="error"] .wk-load{display:none}
+
+@media (max-width:760px){
+  .wk-bar-in{padding:8px 20px}
+  .wk-h{font-size:20px}
+  .wk-back{font-size:13.5px}
+  .wk{height:78svh;min-height:420px}
+  .wk.is-fs{height:100dvh}
+  .wk-top{top:10px;left:10px;right:10px}
+  .wk-fs{width:48px;height:48px}
+  .wk-tour{width:44px;height:72px;margin-top:-36px;top:42%;border-radius:12px}
+  .wk-prev{left:8px}
+  .wk-next{right:8px}
+  .wk-pad{bottom:max(12px,env(safe-area-inset-bottom));grid-template-columns:repeat(3,50px);gap:7px}
+  .wk-pad button{width:50px;height:50px}
+  .wk-hint{top:68px;font-size:13px;border-radius:14px;width:max-content}
+  /* bottom sheet */
+  .wk-info{left:0;right:0;top:auto;bottom:0;width:auto;max-height:58%;border-radius:16px 16px 0 0;border-left:0;border-right:0;border-bottom:0;box-shadow:0 -18px 40px -24px rgba(58,46,42,.45);padding:22px 20px max(18px,env(safe-area-inset-bottom));transform:translateY(105%)}
+  .wk-info::before{content:"";position:absolute;top:8px;left:50%;width:36px;height:4px;margin-left:-18px;border-radius:2px;background:var(--blush-line)}
+  .wk-i-title{font-size:25px;margin-top:6px}
+  .wk-i-price{font-size:22px;margin-top:8px}
+  .wk-i-blurb{display:none}
+  .wk-i-acts{grid-template-columns:1fr 1fr;margin-top:16px;gap:8px}
+  .wk-i-acts .btn{padding:0 12px;font-size:14px}
+  .wk-i-acts .btn:first-child{grid-column:1/-1}
+  .wk-i-details{grid-column:2;margin-top:0;align-self:center}
+  .wk.has-info .wk-pad{opacity:0;pointer-events:none;transform:translateX(-50%) translateY(20px)}
+  .wk.has-info .wk-tour{top:24%}
+}
+@media (prefers-reduced-motion:reduce){
+  .wk-info,.wk-pad,.wk-hint,.wk-load,.wk-round,.wk-tour,.wk-pad button{transition:none}
+}
+body.walk-page .wa-float{display:none}
