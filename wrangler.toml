@@ -7,8 +7,8 @@ compatibility_date = "2026-10-01"
 [[d1_databases]]
 binding = "DB"
 database_name = "tanya-art"
-database_id = "00000000-0000-0000-0000-000000000000"
+database_id = "493bde81-47ba-4e70-92b3-94d5e5c1be6f"
 
 [[kv_namespaces]]
 binding = "IMAGES"
-id = "00000000000000000000000000000000"
+id = "fa7d4ca04abf4e3092231f3595c5c293"
