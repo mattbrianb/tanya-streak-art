@@ -54,7 +54,7 @@ function mkCanvas(w, h) { const c = document.createElement('canvas'); c.width = 
 
 /* ====================================================================== */
 function run(renderer) {
-  const EYE = 1.6, RADIUS = 0.28, H = 3.3, CENTRE = 1.5, LABEL_Y = 1.4, VIEW_DIST = 1.4;
+  const EYE = 1.6, RADIUS = 0.28, H = 3.3, CENTRE = 1.5, LABEL_Y = 1.4, MIN_VIEW = 0.55, VIEW_FILL = 0.6;
   const LABEL_W = 0.2, LABEL_H = 0.1125, LABEL_GAP = 0.09;
   const n = T.paintings.length;
   let dirty = true, glide = null;
@@ -590,11 +590,14 @@ function run(renderer) {
 
   /* ---------- selection ---------- */
   const info = $('#wk-info');
-  let sel = -1, tour = -1, lgIdx = -1;
+  let sel = -1, tour = -1, lgIdx = -1, selDrop = 0;
+  // pixels to shift the view so a painting below (or above) eye level sits centred, like a shift lens
+  const dropPx = () => sel < 0 ? 0 : selDrop / Math.tan(camera.fov * Math.PI / 360) * vh / 2;
   function viewPose(i) {
     const x = works[i], sp = panelSpace(), t30 = Math.tan(camera.fov * Math.PI / 360);
     const th = t30 * sp.h / vh, tw = t30 * sp.w / vh;
-    let dist = Math.max(clamp(0.9 + Math.max(x.w, x.h) * 1.5, 1.15, VIEW_DIST), (x.fw * 0.62) / tw, (x.fh * 0.62) / th);
+    // step close enough that the framed painting fills about 60% of the space beside the card
+    let dist = Math.max(MIN_VIEW, x.fw / (2 * tw * VIEW_FILL), x.fh / (2 * th * VIEW_FILL));
     const wn = x.wall.n, base = x.centre.clone().setY(0);
     const room = x.wall.name === 'partition' ? (ZP - PD / 2) - (-D / 2) - 0.4 : (Math.abs(wn.x) > 0.5 ? W : D) - 0.6;
     dist = Math.min(dist, room);
@@ -602,17 +605,19 @@ function run(renderer) {
     for (;;) {
       p = { x: base.x + wn.x * dist, z: base.z + wn.z * dist };
       const r = resolve({ ...p });
-      if (Math.hypot(r.x - p.x, r.z - p.z) < 0.01 || dist <= 0.9) { p = r; break; }
+      if (Math.hypot(r.x - p.x, r.z - p.z) < 0.01 || dist <= MIN_VIEW) { p = r; break; }
       dist -= 0.1;
     }
-    return { p, yaw: Math.atan2(wn.x, wn.z), pitch: Math.atan2(x.cy - EYE, dist), sp };
+    // look straight at the wall so the frame stays square; the image is shifted to centre the painting instead
+    return { p, yaw: Math.atan2(wn.x, wn.z), pitch: 0, drop: (EYE - x.cy) / dist, sp };
   }
   function select(i, via) {
     sel = i; tour = i;
     fillInfo(works[i]);
     info.dataset.open = 'true'; info.inert = false; stage.classList.add('has-info');
     const pose = viewPose(i);
-    offset.tx = pose.sp.x; offset.ty = pose.sp.y;
+    selDrop = pose.drop;
+    offset.tx = pose.sp.x; offset.ty = pose.sp.y + dropPx();
     glideTo(pose.p, pose.yaw, pose.pitch);
     loadLarge(i);
     updateCount();
@@ -830,7 +835,7 @@ function run(renderer) {
     // 60° vertical; on tall phone screens widen it so at least ~50° shows across
     camera.aspect = vw / vh; camera.fov = Math.max(60, 2 * Math.atan(Math.tan(25 * Math.PI / 180) / camera.aspect) * 180 / Math.PI);
     camera.updateProjectionMatrix();
-    if (sel >= 0) { const sp = panelSpace(); offset.tx = sp.x; offset.ty = sp.y; }
+    if (sel >= 0) { const sp = panelSpace(); offset.tx = sp.x; offset.ty = sp.y + dropPx(); }
     applyOffset(); dirty = true;
   }
   new ResizeObserver(resize).observe(stage);

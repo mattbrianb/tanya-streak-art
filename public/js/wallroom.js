@@ -5,8 +5,9 @@
    Wallroom.open(id, sizeId) opens it from script. #wall/<id> in the URL opens it on load. */
 (function () {
   var T = window.TANYA;
-  var WALL_CM = 190;          // visible wall height above the floor line
-  var CENTRE_CM = 145;        // gallery hanging height for the centre of a work
+  var FRAME_CM = 6.5;         // the deepest frame (timber & mat) reaches this far past the canvas
+  var GAP_CM = 20;            // the painting hangs this far above the table
+  var BOARD_W = 110, BOARD_H = 78;   // console table under the painting: the size reference
   var ICONS = {
     prev: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M15 4l-8 8 8 8"/></svg>',
     next: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M9 4l8 8-8 8"/></svg>',
@@ -14,7 +15,7 @@
     wa: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 00-8.6 15.1L2 22l5-1.3A10 10 0 1012 2zm0 18.2a8.2 8.2 0 01-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1112 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.5.1a6.7 6.7 0 01-3.3-2.9c-.3-.4.3-.4.7-1.4a.5.5 0 000-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 00-.7.3 3 3 0 00-.9 2.2 5.2 5.2 0 001.1 2.7 11.8 11.8 0 004.5 4c1.7.7 2.3.8 3.2.6a2.7 2.7 0 001.8-1.2 2.2 2.2 0 00.1-1.2c0-.1-.2-.2-.5-.3z"/></svg>'
   };
 
-  var opts = { base: '', wallName: 'Theme wall', frame: 'canvas', frameName: null, tone: 'theme' };
+  var opts = { base: '', wallName: 'Theme wall', frame: 'canvas', frameName: null, tone: 'theme', textures: '/static/walls/' };
   var el, stage, piece, img, label, state = { i: 0, size: 'medium', view: 'room', open: false, busy: false };
   var lastFocus = null, hintTimer = null;
 
@@ -33,6 +34,9 @@
     el.dataset.lit = 'false';
 
     var tones = [['theme', opts.wallName, 'var(--wr-wall, #ECE7DF)'], ['white', 'Gallery white', '#F1EFEA'], ['plaster', 'Warm plaster', '#E3D3BD'], ['sage', 'Sage', '#B9C2AE'], ['charcoal', 'Charcoal', '#34322F']];
+    var textures = [['brick', 'Exposed brick'], ['brick-white', 'Painted brick'], ['concrete', 'Concrete'], ['oak', 'Oak panelling'], ['limewash', 'Limewash']];
+    textures.forEach(function (t) { t.push('url(' + opts.textures + t[0] + '-s.jpg) center / cover'); });
+    var swatchBtn = function (t) { return '<button type="button" class="wr-chip wr-tone" data-tone="' + t[0] + '" data-name="' + t[1] + '" aria-pressed="false" aria-label="' + t[1] + ' wall" title="' + t[1] + '"><i class="wr-swatch" style="background:' + t[2] + '"></i></button>'; };
     var frames = [['canvas', 'Canvas edge'], ['float', 'Black float'], ['oak', 'Oak']];
     if (opts.frameName) frames.unshift([opts.frame, opts.frameName]);
 
@@ -41,7 +45,7 @@
         '<div class="wr-wall"></div><div class="wr-skirting"></div><div class="wr-floor"></div>' +
         '<div class="wr-beam"></div>' +
         '<figure class="wr-piece"><div class="wr-canvas"><img alt="" decoding="async"></div></figure>' +
-        '<div class="wr-bench" aria-hidden="true"></div>' +
+        '<div class="wr-board" aria-hidden="true"><i class="wr-leg"></i><i class="wr-leg wr-leg-r"></i><i class="wr-board-apron"></i><i class="wr-board-top"></i><i class="wr-books"></i></div>' +
         '<div class="wr-vignette"></div>' +
         '<section class="wr-label" aria-live="polite">' +
           '<h2 class="wr-title" id="wr-title"></h2>' +
@@ -54,11 +58,13 @@
       '</div>' +
       '<div class="wr-top">' +
         '<span class="wr-brand">' + T.name + '</span>' +
-        '<div class="wr-group" role="group" aria-label="Wall colour"><span>Wall</span>' +
-          tones.map(function (t) { return '<button type="button" class="wr-chip wr-tone" data-tone="' + t[0] + '" aria-pressed="false" aria-label="' + t[1] + ' wall"><i class="wr-swatch" style="background:' + t[2] + '"></i><span class="wr-t">' + t[1] + '</span></button>'; }).join('') +
-        '</div>' +
-        '<div class="wr-group" role="group" aria-label="Frame"><span>Frame</span>' +
-          frames.map(function (f) { return '<button type="button" class="wr-chip" data-frame="' + f[0] + '" aria-pressed="false">' + f[1] + '</button>'; }).join('') +
+        '<div class="wr-controls">' +
+          '<div class="wr-group wr-walls" role="group" aria-label="Wall"><span class="wr-gl">Wall</span><span class="wr-wall-name" aria-hidden="true"></span>' +
+            tones.map(swatchBtn).join('') + '<i class="wr-div" aria-hidden="true"></i>' + textures.map(swatchBtn).join('') +
+          '</div>' +
+          '<div class="wr-group" role="group" aria-label="Frame"><span class="wr-gl">Frame</span>' +
+            frames.map(function (f) { return '<button type="button" class="wr-chip" data-frame="' + f[0] + '" aria-pressed="false">' + f[1] + '</button>'; }).join('') +
+          '</div>' +
         '</div>' +
         '<span class="wr-count" aria-live="polite"></span>' +
         '<button type="button" class="wr-close" aria-label="Close the wallroom">' + ICONS.close + '</button>' +
@@ -100,7 +106,11 @@
   }
 
   function syncChips() {
-    el.querySelectorAll('.wr-chip[data-tone]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.tone === el.dataset.tone)); });
+    el.querySelectorAll('.wr-chip[data-tone]').forEach(function (b) {
+      var on = b.dataset.tone === el.dataset.tone;
+      b.setAttribute('aria-pressed', String(on));
+      if (on) $('.wr-wall-name').textContent = b.dataset.name;
+    });
     el.querySelectorAll('.wr-chip[data-frame]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.frame === el.dataset.frame)); });
   }
 
@@ -110,18 +120,22 @@
     return sizes.filter(function (s) { return s.id === state.size; })[0] || sizes[Math.min(1, sizes.length - 1)];
   }
 
+  // Framed like a photo of the painting hung above a console table: close enough to enjoy the painting,
+  // with the table (and the bricks or boards of a textured wall) showing its real size.
   function layout() {
-    var vw = window.innerWidth, vh = window.innerHeight, phone = vw <= 760;
-    var floorY = Math.round(vh * (phone ? 0.64 : 0.8));
+    var vw = window.innerWidth, vh = window.innerHeight, phone = vw <= 760, narrow = vw < 1180;
     var size = currentSize();
     var all = T.sizesFor(current()), largest = all[all.length - 1];
-    var ppc = Math.min(floorY / WALL_CM, (vw * (phone ? 0.8 : 0.5)) / largest.w, (floorY - (phone ? 175 : 90)) / largest.h);
-    var pw = size.w * ppc, ph = size.h * ppc;
-    var py = floorY - CENTRE_CM * ppc;
-    var topClear = phone ? 150 : 72;
-    if (py - ph / 2 < topClear) py = topClear + ph / 2;
-    if (py + ph / 2 > floorY - 18) py = floorY - 18 - ph / 2;
+    var fw = largest.w + FRAME_CM * 2, fh = largest.h + FRAME_CM * 2;
+    // fill a good share of the screen, but cap the zoom so a small painting still looks small next to the table
+    var ppc = Math.min(phone ? 7 : 10, (vw * (phone ? 0.74 : 0.38)) / fw, (vh * (phone ? 0.32 : 0.44)) / fh);
+    var pw = size.w * ppc, ph = size.h * ppc, fr = FRAME_CM * ppc;
     var px = phone ? vw / 2 : vw * 0.42;
+    var py = vh * (phone ? 0.44 : 0.42);
+    var topClear = (phone ? 158 : narrow ? 128 : 92) + fr;
+    if (py - ph / 2 < topClear) py = topClear + ph / 2;
+    var boardTop = py + ph / 2 + GAP_CM * ppc;
+    var floorY = boardTop + BOARD_H * ppc;
     var s = el.style;
     s.setProperty('--floor-y', floorY + 'px');
     s.setProperty('--ppc', ppc + 'px');
@@ -131,11 +145,10 @@
     s.setProperty('--py', py + 'px');
     s.setProperty('--spot-x', (px / vw * 100) + '%');
     s.setProperty('--skirt-h', Math.max(6, 9 * ppc) + 'px');
-    s.setProperty('--label-gap', Math.max(36, 16 * ppc) + 'px');
-    var bw = 130 * ppc * 1.15, bh = 44 * ppc * 1.15;
-    s.setProperty('--bw', bw + 'px');
-    s.setProperty('--bh', bh + 'px');
-    s.setProperty('--bench-top', (vh - (vh - floorY) * 0.22 - bh) + 'px');
+    s.setProperty('--label-gap', (fr + 40) + 'px');
+    s.setProperty('--label-top', Math.max(topClear - fr, py - ph / 2) + 'px');
+    s.setProperty('--board-top', boardTop + 'px');
+    s.setProperty('--bw', BOARD_W * ppc + 'px');
     state.geo = { vw: vw, vh: vh, px: px, py: py, pw: pw, ph: ph };
     applyView();
   }
