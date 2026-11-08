@@ -20,6 +20,15 @@
         ],
         "createdAt": "2026-11-08T07:02:52.424Z",
         "reason": "user confirmed: client chose the Blush & Linen palette; #FFFCF9 is its warm white page background on every page"
+      },
+      {
+        "rule": "broken-image",
+        "value": "*",
+        "files": [
+          "public/js/site.js"
+        ],
+        "createdAt": "2026-11-08T13:13:56.868Z",
+        "reason": "false positive: the showcase strip builds its img tags with data-src; loadNear() sets src as each photo nears the screen"
       }
     ]
   }

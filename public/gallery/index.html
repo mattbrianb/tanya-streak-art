@@ -32,6 +32,7 @@
       <div class="grid" id="grid"><p class="loading">Hanging the paintings…</p></div>
     </section>
   </div>
+  <section class="sec showcase" id="showcase" hidden></section>
 </main>
 <div id="site-footer"></div>
 <script src="/js/wallroom.js"></script>
@@ -52,6 +53,7 @@ Site.boot('/gallery/').then(function (T) {
   document.getElementById('chips').addEventListener('click', function (e) { var c = e.target.closest('.chip'); if (c) show(c.dataset.f); });
   var m = location.search.match(/[?&]show=(available|sold)/);
   show(m ? m[1] : 'all');
+  Site.showcase(document.getElementById('showcase'), T.commissions);
 }).catch(function () {
   document.getElementById('grid').innerHTML = '<p class="loading">The paintings didn’t load. Please refresh the page.</p>';
 });

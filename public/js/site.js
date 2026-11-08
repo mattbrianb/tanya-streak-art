@@ -263,6 +263,132 @@
     if (f) f.hidden = !has;
   }
 
+  /* ---------- completed commissions showcase (home + gallery) ----------
+     A slow, endless strip of framed paintings. It eases to a stop under the mouse or keyboard focus, can be
+     dragged or flicked, has a Pause button, and only fetches each photo as it is about to slide into view.
+     With reduced motion it becomes a plain row you scroll yourself. */
+  var PAUSE_I = '<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3.5" y="2.5" width="3" height="11" rx="1"/><rect x="9.5" y="2.5" width="3" height="11" rx="1"/></svg>';
+  var PLAY_I = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 2.8v10.4a.8.8 0 0 0 1.2.7l8.4-5.2a.8.8 0 0 0 0-1.4L5.7 2.1a.8.8 0 0 0-1.2.7z"/></svg>';
+  function showcase(el, list) {
+    if (!el || !list || !list.length) return;
+    var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var moving = !reduced && list.length > 2;
+    function itemHTML(c, copy) {
+      var im = c.images[0], ar = im.width && im.height ? im.width / im.height : 1;
+      return '<a class="sc-item" href="' + c.url + '" draggable="false" style="--ar:' + ar.toFixed(4) + '"' + (copy ? ' aria-hidden="true" tabindex="-1"' : '') + '>' +
+        '<span class="sc-art"><span class="sc-frame"><img ' + (moving ? 'data-src' : 'loading="lazy" src') + '="' + esc(im.md) + '" alt="" draggable="false" decoding="async"></span></span>' +
+        '<span class="sc-t">' + esc(c.title) + '</span></a>';
+    }
+    // enough copies of the list to fill a wide screen, then the same again so the loop is seamless
+    var est = list.reduce(function (s, c) { var im = c.images[0]; return s + Math.min(240 * (im.width / im.height || 1), 440) + 90; }, 0);
+    var reps = moving ? Math.max(1, Math.ceil(innerWidth * 1.4 / est)) : 1, base = '';
+    for (var r = 0; r < reps; r++) base += list.map(function (c) { return itemHTML(c, r > 0); }).join('');
+    var copies = moving ? list.map(function (c) { return itemHTML(c, true); }).join('').repeat(reps) : '';
+
+    el.innerHTML =
+      '<div class="wrap section-head"><h2 id="sc-h">Completed commissions</h2><p>Paintings that have found their homes. Tap one to see it up close.</p></div>' +
+      '<div class="sc' + (moving ? '' : ' is-static') + '"><div class="sc-track">' + base + copies + '</div></div>' +
+      '<div class="wrap sc-foot">' +
+        (moving ? '<button type="button" class="sc-toggle" aria-label="Pause the moving paintings">' + PAUSE_I + '<span>Pause</span></button>' : '') +
+        '<a class="btn ghost" href="/commissions/completed/">See all completed commissions</a></div>';
+    el.setAttribute('aria-labelledby', 'sc-h');
+    el.hidden = false;
+    if (!moving) return;
+
+    var vp = el.querySelector('.sc'), track = el.querySelector('.sc-track'), btn = el.querySelector('.sc-toggle');
+    var items = [].slice.call(track.children), m = items.length / 2;
+    var period = 0, offs = [], vw = 0, x = 0, v = 0, fling = 0, raf = 0, last = 0, lastLoad = 0;
+    var SPEED = innerWidth < 761 ? 26 : 34;  // px per second
+    var paused = false, hover = false, focus = false, drag = null, visible = false, justDragged = false;
+
+    function measure() {
+      period = items[m].offsetLeft - items[0].offsetLeft;
+      vw = vp.clientWidth;
+      offs = items.map(function (it) { return [it.offsetLeft, it.offsetWidth]; });
+    }
+    function wrap() { x = ((x % period) - period) % period; }  // keep x in (-period, 0]
+    function loadNear() {
+      items.forEach(function (it, i) {
+        var img = it.querySelector('img[data-src]'); if (!img) return;
+        var left = offs[i][0] + x;
+        if (left < vw * 2 && left + offs[i][1] > -vw * 0.5) { img.src = img.dataset.src; img.removeAttribute('data-src'); }
+      });
+    }
+    function frame(t) {
+      var dt = last ? Math.min(0.05, (t - last) / 1000) : 0; last = t;
+      if (!drag) {
+        if (Math.abs(fling) > 8) { x += fling * dt; fling *= Math.pow(0.04, dt); }
+        else {
+          fling = 0;
+          var target = paused || hover || focus ? 0 : SPEED;
+          v += (target - v) * Math.min(1, dt * 3);  // ease to a stop or back up to speed
+          x -= v * dt;
+        }
+      }
+      wrap();
+      track.style.transform = 'translate3d(' + x.toFixed(2) + 'px,0,0)';
+      if (t - lastLoad > 250) { lastLoad = t; loadNear(); }
+      raf = visible ? requestAnimationFrame(frame) : 0;
+    }
+    function start() { if (!raf) { last = 0; raf = requestAnimationFrame(frame); } }
+
+    measure();
+    // nothing is fetched or animated until the strip is about to scroll into view
+    new IntersectionObserver(function (es) {
+      visible = es[0].isIntersecting;
+      if (visible) { loadNear(); start(); }
+    }, { rootMargin: '500px 0px' }).observe(vp);
+    var rt; addEventListener('resize', function () { clearTimeout(rt); rt = setTimeout(function () { measure(); wrap(); loadNear(); }, 150); });
+
+    btn.addEventListener('click', function () {
+      paused = !paused;
+      btn.innerHTML = (paused ? PLAY_I : PAUSE_I) + '<span>' + (paused ? 'Play' : 'Pause') + '</span>';
+      btn.setAttribute('aria-label', (paused ? 'Play' : 'Pause') + ' the moving paintings');
+    });
+    vp.addEventListener('pointerenter', function (e) { if (e.pointerType === 'mouse') hover = true; });
+    vp.addEventListener('pointerleave', function (e) { if (e.pointerType === 'mouse') hover = false; });
+    // keyboard: stop, and bring the focused painting into view
+    vp.addEventListener('focusin', function (e) {
+      focus = true;
+      var i = items.indexOf(e.target.closest('.sc-item')); if (i < 0) return;
+      var left = offs[i][0] + x;
+      if (left < 40 || left + offs[i][1] > vw - 40) { x = -(offs[i][0] - (vw - offs[i][1]) / 2); wrap(); loadNear(); }
+    });
+    vp.addEventListener('focusout', function () { focus = false; });
+
+    // drag or flick it along (a sideways move; up-and-down still scrolls the page)
+    vp.addEventListener('pointerdown', function (e) {
+      if (e.button !== 0) return;
+      drag = null; fling = 0;
+      var sx = e.clientX, sy = e.clientY, x0 = x, lx = sx, lt = performance.now(), vel = 0, id = e.pointerId;
+      function move(ev) {
+        if (ev.pointerId !== id) return;
+        var dx = ev.clientX - sx;
+        if (!drag) {
+          if (Math.abs(dx) < 6 || Math.abs(dx) < Math.abs(ev.clientY - sy)) return;
+          drag = true; vp.classList.add('is-drag');
+          try { vp.setPointerCapture(id); } catch (err) {}
+        }
+        var now = performance.now(), dt = Math.max(1, now - lt);
+        vel = vel * 0.6 + ((ev.clientX - lx) / dt * 1000) * 0.4; lx = ev.clientX; lt = now;
+        x = x0 + dx; wrap(); x0 = x - dx;
+      }
+      function up(ev) {
+        if (ev.pointerId !== id) return;
+        removeEventListener('pointermove', move); removeEventListener('pointerup', up); removeEventListener('pointercancel', up);
+        if (drag) {
+          justDragged = true; setTimeout(function () { justDragged = false; }, 0);
+          fling = performance.now() - lt < 80 ? Math.max(-2400, Math.min(2400, vel)) : 0;
+          v = 0;
+        }
+        drag = null; vp.classList.remove('is-drag');
+      }
+      addEventListener('pointermove', move); addEventListener('pointerup', up); addEventListener('pointercancel', up);
+    });
+    vp.addEventListener('click', function (e) { if (justDragged) { e.preventDefault(); e.stopPropagation(); } }, true);
+    vp.addEventListener('dragstart', function (e) { e.preventDefault(); });
+  }
+
   /* ---------- boot ---------- */
   function boot(active) {
     document.body.insertAdjacentHTML('afterbegin', SYMBOLS);
@@ -283,7 +409,7 @@
 
   window.Site = {
     boot: boot, load: load, esc: esc, rand: rand, num: num, dims: dims, waLink: waLink, phone: PHONE, instagram: IG,
-    cardHTML: cardHTML, icon: ICON, bindSubForms: bindSubForms,
+    cardHTML: cardHTML, icon: ICON, bindSubForms: bindSubForms, showcase: showcase,
     sizesFor: sizesFor, priceText: priceText, orderLink: orderLink, similarLink: similarLink
   };
 })();

@@ -75,7 +75,9 @@
     </div>
   </section>
 
-  <section class="sec about" style="padding-top:24px" aria-labelledby="about-h">
+  <div class="band"><section class="sec showcase" id="showcase" hidden></section></div>
+
+  <section class="sec about" aria-labelledby="about-h">
     <div class="wrap">
       <div class="arch"><img src="/static/tanya.jpg" width="1000" height="1094" alt="Tanya Streak, smiling, in her garden" loading="lazy" style="object-position:50% 30%"></div>
       <div>
@@ -116,6 +118,7 @@ Site.boot('/').then(function (T) {
   document.getElementById('tiers').innerHTML = T.tiers.map(function (t, i) {
     return '<div class="tier"><h3><span class="size-label">' + E(t.label) + '</span> ' + t.longEdge + ' cm</h3><p class="amount">' + Site.rand(t.price) + '</p><p class="note">' + (notes[i] || '') + '</p></div>';
   }).join('');
+  Site.showcase(document.getElementById('showcase'), T.commissions);
 }).catch(function () {
   document.getElementById('grid').innerHTML = '<p class="loading">The paintings didn’t load. Please refresh the page.</p>';
 });

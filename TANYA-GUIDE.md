@@ -24,7 +24,7 @@ Paintings you've made for people, and originals that have sold, go on a page on 
 3. Add the name, size and medium, and a line or two in **The story**: who it was for or the occasion. First names only is best.
 4. Choose **Show it**, then tap **Save commission**.
 
-The **Commissions** menu on your website gets its "Completed commissions" link as soon as the first one is saved. To take one off the website without deleting it, tap **Hide from website**.
+They also drift past slowly in a strip on your home page and at the bottom of the Gallery. The **Commissions** menu on your website gets its "Completed commissions" link as soon as the first one is saved. To take one off the website without deleting it, tap **Hide from website**.
 
 ## Your email list
 - People join from the pop-up box on your website or from the bottom of every page.
