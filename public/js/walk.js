@@ -580,7 +580,7 @@ function run(renderer) {
   let vw = 1, vh = 1;
   function panelSpace() {
     if (sel < 0) return { x: 0, y: 0, w: vw, h: vh };
-    if (vw > 760) { const pw = Math.min(400, vw * 0.45); return { x: pw / 2, y: 64, w: vw - pw, h: vh - 128 }; }
+    if (vw > 760) { const pw = Math.min(470, vw * 0.5); /* room for the card and the next arrow beside it */ return { x: pw / 2, y: 64, w: vw - pw, h: vh - 128 }; }
     const sh = info.offsetHeight; return { x: 0, y: sh / 2 - 28, w: vw, h: Math.max(160, vh - sh - 56) };
   }
   function applyOffset() {

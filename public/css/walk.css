@@ -33,9 +33,13 @@
 .wk-tour{position:absolute;top:50%;z-index:3;width:52px;height:88px;margin-top:-44px;border-radius:14px}
 .wk-tour svg{width:22px;height:22px}
 .wk-prev{left:16px}
-.wk-next{right:16px}
+.wk-next{right:16px;transition:background-color .2s,color .2s,border-color .2s,transform .2s var(--ease),opacity .4s ease,translate .6s var(--ease)}
+/* when the painting card is open, the next arrow slides over to sit just left of it */
+.wk.has-info .wk-next{translate:calc(-1 * (var(--wk-info-w) + 20px)) 0}
 
-.wk-pad{position:absolute;left:50%;bottom:18px;z-index:3;transform:translateX(-50%);display:grid;grid-template-columns:repeat(3,52px);gap:8px;transition:opacity .35s ease,transform .5s var(--ease)}
+.wk-pad{position:absolute;left:50%;bottom:18px;z-index:3;transform:translateX(-50%);display:grid;grid-template-columns:repeat(3,52px);gap:8px;transition:opacity .35s ease,transform .5s var(--ease),left .6s var(--ease)}
+/* with the card open, the walk buttons centre under the painting, in the space left of the card (matches panelSpace in walk.js) */
+@media (min-width:761px){.wk.has-info .wk-pad{left:calc((100% - min(470px, 50%)) / 2)}}
 .wk-pad button{width:52px;height:52px;border-radius:12px}
 .wk-pad svg{width:22px;height:22px}
 
@@ -43,7 +47,8 @@
 .wk-hint.is-gone{opacity:0}
 
 /* painting card */
-.wk-info{position:absolute;z-index:4;right:20px;top:76px;width:360px;max-height:calc(100% - 96px);overflow:auto;background:var(--white);border:1px solid var(--blush-line);border-radius:8px;padding:28px 28px 26px;box-shadow:0 24px 50px -24px rgba(58,46,42,.5);transform:translateX(calc(100% + 40px));opacity:0;visibility:hidden;transition:transform .6s var(--ease),opacity .35s ease,visibility 0s linear .6s;user-select:text;-webkit-user-select:text}
+.wk{--wk-info-w:360px}
+.wk-info{position:absolute;z-index:4;right:20px;top:76px;width:var(--wk-info-w);max-height:calc(100% - 96px);overflow:auto;background:var(--white);border:1px solid var(--blush-line);border-radius:8px;padding:28px 28px 26px;box-shadow:0 24px 50px -24px rgba(58,46,42,.5);transform:translateX(calc(100% + 40px));opacity:0;visibility:hidden;transition:transform .6s var(--ease),opacity .35s ease,visibility 0s linear .6s;user-select:text;-webkit-user-select:text}
 .wk-info[data-open="true"]{transform:none;opacity:1;visibility:visible;transition:transform .6s var(--ease),opacity .35s ease,visibility 0s}
 .wk-close{position:absolute;top:10px;right:10px;width:44px;height:44px;border-radius:50%;box-shadow:none;border-color:transparent;background:transparent;color:var(--ink)}
 .wk-close svg{width:18px;height:18px}
@@ -101,6 +106,7 @@
   .wk-i-details{grid-column:2;margin-top:0;align-self:center}
   .wk.has-info .wk-pad{opacity:0;pointer-events:none;transform:translateX(-50%) translateY(20px)}
   .wk.has-info .wk-tour{top:24%}
+  .wk.has-info .wk-next{translate:none}
 }
 @media (prefers-reduced-motion:reduce){
   .wk-info,.wk-pad,.wk-hint,.wk-load,.wk-round,.wk-tour,.wk-pad button{transition:none}
