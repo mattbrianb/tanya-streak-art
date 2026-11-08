@@ -1,5 +1,5 @@
 // GET /api/paintings  → everything visible on the site (for sale + sold), with images,
-//                       plus the finished commissions for the flip-through.
+//                       plus the finished commissions for /commissions/completed/.
 // GET /api/paintings?slug=x → one painting.
 import { json, error, loadPaintings, getSetting } from '../../lib/util.js';
 

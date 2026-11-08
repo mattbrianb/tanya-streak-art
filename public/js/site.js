@@ -93,7 +93,7 @@
   function navLink(n, active) {
     return '<a href="' + n[0] + '"' + (active === n[0] ? ' aria-current="page"' : '') + '>' + n[1] + '</a>';
   }
-  // "Commissions" becomes a small menu once there is at least one finished commission to flip through.
+  // "Commissions" becomes a small menu once there is at least one finished commission to show.
   function comNavHTML(active) {
     var cur = active === '/commissions/' || active === DONE;
     return '<div class="nav-drop">' +

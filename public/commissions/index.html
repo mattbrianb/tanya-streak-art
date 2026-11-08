@@ -32,7 +32,7 @@
   <section class="sec wrap done-teaser" id="done" aria-labelledby="done-h" hidden>
     <div class="section-head"><h2 id="done-h">Recently completed</h2><p>A few of the paintings Tanya has made to order.</p></div>
     <div class="done-row" id="done-row"></div>
-    <p class="done-more"><a class="btn ghost" href="/commissions/completed/">Flip through completed commissions</a></p>
+    <p class="done-more"><a class="btn ghost" href="/commissions/completed/">See all completed commissions</a></p>
   </section>
 
   <div class="band">
@@ -80,7 +80,7 @@
 <script src="/js/site.js"></script>
 <script>
 Site.boot('/commissions/').then(function (T) {
-  // a peek at finished commissions, each opening the flip-through at that painting
+  // a peek at finished commissions, each opening the Completed commissions page at that painting
   if (T.commissions.length) {
     document.getElementById('done-row').innerHTML = T.commissions.slice(0, 4).map(function (c) {
       return '<a class="done-item" href="' + c.url + '"><span class="done-frame"><img src="' + Site.esc(c.images[0].md) + '" alt="" loading="lazy"></span>' +

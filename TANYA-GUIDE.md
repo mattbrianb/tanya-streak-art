@@ -18,7 +18,7 @@ Go to **My paintings** and tap **Mark as sold**. It moves out of the Shop and st
 If you'd rather it disappear completely, open it and choose **Hidden**.
 
 ## Finished commissions
-Paintings you've made for people go in a flip-through on your website called **Completed commissions** (under **Commissions** in the menu).
+Paintings you've made for people, and originals that have sold, go on a page on your website called **Completed commissions** (under **Commissions** in the menu). Each one gets its own spread with its photo and story, one after another as people scroll. The 22 paintings you sent are already there: we gave them names and a short description, so open any of them to change the name, add the size, or replace the description with the real story.
 1. On the home screen, tap **Finished commissions**, then **Add new**.
 2. Add photos. The first is the one people see first; a photo of it hanging in its new home is a lovely second.
 3. Add the name, size and medium, and a line or two in **The story**: who it was for or the occasion. First names only is best.

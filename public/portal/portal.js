@@ -465,7 +465,7 @@
       title: 'Finished commissions', base: '#/commissions', filterKey: 'tsa_cfilter', loadingText: 'Loading your commissions…',
       tabs: [['all', 'All'], ['available', 'On website'], ['hidden', 'Hidden']],
       emptyH: 'No finished commissions yet',
-      emptyP: 'Add photos of paintings you’ve made for people. They appear in a flip-through on your website called “Completed commissions”.',
+      emptyP: 'Add photos of paintings you’ve made for people. They appear on your website’s “Completed commissions” page.',
       emptyBtn: 'Add a finished commission',
       none: { available: 'None of your commissions are on your website right now.', hidden: 'None of your commissions are hidden right now.' },
       showAll: 'Show all commissions'
@@ -630,7 +630,7 @@
     },
     commission: {
       base: '#/commissions', back: 'Finished commissions', newTitle: 'Add a finished commission', editTitle: 'Edit commission',
-      lede: 'Add photos of a painting you made for someone, then a few details. It goes into the “Completed commissions” flip-through on your website.',
+      lede: 'Add photos of a painting you made for someone, then a few details. It goes on the “Completed commissions” page of your website.',
       photosHint: 'The first photo is the one people see first. A photo of it hanging in its new home is a lovely second photo.',
       namePh: 'For example: Roses for Sarah’s new home',
       descLabel: 'The story', descPh: 'Who it was for or the occasion. For example: “A wedding bouquet for Sarah and James, painted from their photos.” First names only is best.',
