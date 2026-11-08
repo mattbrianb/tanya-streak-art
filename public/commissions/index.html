@@ -76,7 +76,7 @@
 Site.boot('/commissions/').then(function (T) {
   var E = Site.esc, notes = ['For a shelf or bedside table', 'Over a console or desk', 'Above the sofa or bed'];
   document.getElementById('tiers').innerHTML = T.tiers.map(function (t, i) {
-    return '<div class="tier"><p class="size-label">' + E(t.label) + '</p><h3>' + t.longEdge + ' cm</h3><p class="amount">' + Site.rand(t.price) + '</p><p class="note">' + (notes[i] || '') + '</p></div>';
+    return '<div class="tier"><h3><span class="size-label">' + E(t.label) + '</span> ' + t.longEdge + ' cm</h3><p class="amount">' + Site.rand(t.price) + '</p><p class="note">' + (notes[i] || '') + '</p></div>';
   }).join('');
   var opts = T.tiers.map(function (t) { return [t.label + ', about ' + t.longEdge + ' cm (' + Site.rand(t.price) + ')', t.label + ' · ' + t.longEdge + ' cm', Site.rand(t.price)]; })
     .concat([['Something else', 'Something else', 'Tanya will quote']]);

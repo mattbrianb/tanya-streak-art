@@ -1,0 +1,26 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "broken-image",
+        "value": "*",
+        "files": [
+          "public/js/wallroom.js"
+        ],
+        "createdAt": "2026-11-08T07:02:46.245Z",
+        "reason": "false positive: the wallroom <img> is a template; wallroom.js sets img.src when a painting opens (line 171)"
+      },
+      {
+        "rule": "cream-palette",
+        "value": "*",
+        "files": [
+          "public/**/*.html"
+        ],
+        "createdAt": "2026-11-08T07:02:52.424Z",
+        "reason": "user confirmed: client chose the Blush & Linen palette; #FFFCF9 is its warm white page background on every page"
+      }
+    ]
+  }
+}
