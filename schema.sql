@@ -15,7 +15,9 @@ CREATE TABLE IF NOT EXISTS paintings (
   sort        INTEGER NOT NULL DEFAULT 0,    -- lower shows first
   created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
   updated_at  TEXT    NOT NULL DEFAULT (datetime('now')),
-  sold_at     TEXT
+  sold_at     TEXT,
+  kind        TEXT    NOT NULL DEFAULT 'painting'   -- 'commission' = a finished commission (flip-through only)
+              CHECK (kind IN ('painting', 'commission'))
 );
 
 CREATE TABLE IF NOT EXISTS images (

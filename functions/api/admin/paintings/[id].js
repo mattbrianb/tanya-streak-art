@@ -7,7 +7,7 @@ import { validatePainting, deleteImages } from '../../../../lib/paintings.js';
 async function byId(env, id) {
   const row = await env.DB.prepare('SELECT * FROM paintings WHERE id = ?').bind(id).first();
   if (!row) return null;
-  const [p] = await loadPaintings(env.DB, { includeHidden: true, slug: row.slug });
+  const [p] = await loadPaintings(env.DB, { includeHidden: true, slug: row.slug, kind: null });
   return p;
 }
 
@@ -20,8 +20,9 @@ export async function onRequestPut({ request, env, params }) {
   const id = Number(params.id);
   const current = await env.DB.prepare('SELECT * FROM paintings WHERE id = ?').bind(id).first();
   if (!current) return error(404, 'That painting no longer exists.');
-  const { values: v, error: msg } = validatePainting(await readJson(request), true);
+  const { values: v, error: msg } = validatePainting({ kind: current.kind, ...(await readJson(request)) }, true);
   if (msg) return error(400, msg);
+  if (v.kind === current.kind) delete v.kind;
   if (!Object.keys(v).length) return json({ painting: await byId(env, id) });
 
   if (v.title && v.title !== current.title) v.slug = await uniqueSlug(env.DB, v.title, id);

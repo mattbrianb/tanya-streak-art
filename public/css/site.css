@@ -311,3 +311,109 @@ a.frame:hover .room,a.frame:focus-visible .room{opacity:1}
   html{scroll-behavior:auto}
   .frame,.btn,.overlay,.pop{transition:none}
 }
+
+/* ---------- commissions menu (shown once there are finished commissions) ---------- */
+.nav-drop{position:relative;display:inline-flex}
+.nav-drop-btn{display:inline-flex;align-items:center;gap:7px;min-height:40px;padding:0;background:none;border:0;border-bottom:1px solid transparent;font:inherit;color:inherit;cursor:pointer;transition:border-color .2s}
+.nav-drop-btn:hover,.nav-drop-btn.is-current{border-color:var(--rose)}
+.nav-drop-btn svg{width:10px;height:10px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;transition:transform .25s var(--ease)}
+.nav-drop.open .nav-drop-btn svg{transform:rotate(180deg)}
+.nav-menu{position:absolute;top:calc(100% + 8px);left:50%;z-index:30;min-width:236px;padding:8px;background:var(--white);border:1px solid var(--blush-line);border-radius:6px;box-shadow:0 18px 36px -18px rgba(58,46,42,.35);text-align:left;opacity:0;visibility:hidden;transform:translate(-50%,-4px);transition:opacity .18s ease,transform .25s var(--ease),visibility 0s linear .25s}
+.nav-drop.open .nav-menu{opacity:1;visibility:visible;transform:translate(-50%,0);transition:opacity .18s ease,transform .25s var(--ease),visibility 0s}
+nav.main .nav-menu a{display:flex;min-height:44px;padding:0 14px;border-radius:4px;border-bottom:0;white-space:nowrap;transition:background-color .15s}
+nav.main .nav-menu a:hover,nav.main .nav-menu a[aria-current="page"]{background:var(--blush)}
+
+/* ---------- commissions page: a peek at finished work ---------- */
+.done-teaser{padding-top:0}
+.done-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:28px;max-width:980px;margin:0 auto}
+.done-item{display:block;text-decoration:none;text-align:center}
+.done-frame{display:block;aspect-ratio:1;padding:10px;background:var(--mat);border:7px solid var(--timber);box-shadow:0 14px 26px -16px rgba(58,46,42,.5);transition:transform .5s var(--ease)}
+.done-frame img{width:100%;height:100%;object-fit:cover;display:block}
+.done-item:hover .done-frame{transform:translateY(-4px)}
+.done-t{display:block;margin-top:14px;font:400 17px/1.3 'Gloock',Georgia,serif}
+.done-more{margin-top:36px;text-align:center}
+
+/* ---------- completed commissions: the flip-through book ---------- */
+.flip-band{padding:72px 0 64px}
+.flip{position:relative}
+.flip .loading{text-align:center;color:var(--ink-soft)}
+.flip-stage{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:22px;max-width:1160px;margin:0 auto}
+.flip-nav{display:grid;place-items:center;width:52px;height:52px;border-radius:50%;background:var(--white);color:var(--rose-text);border:1px solid var(--blush-line);cursor:pointer;box-shadow:0 10px 22px -14px rgba(58,46,42,.45);transition:background-color .2s,color .2s,border-color .2s,transform .2s var(--ease)}
+.flip-nav:hover{border-color:var(--rose);color:var(--rose-deep)}
+.flip-nav:active{transform:scale(.95)}
+.flip-nav svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.book{position:relative;display:grid;grid-template-columns:1fr 1fr;perspective:2400px;min-height:560px;border-radius:6px;box-shadow:0 34px 60px -34px rgba(58,46,42,.55),3px 3px 0 #F4EBE6,6px 6px 0 #EADBD3;touch-action:pan-y}
+.page{position:relative;background:var(--white);overflow:hidden}
+.page-l{border-radius:6px 0 0 6px;box-shadow:inset -34px 0 34px -30px rgba(58,46,42,.22)}
+.page-r{border-radius:0 6px 6px 0;box-shadow:inset 34px 0 34px -30px rgba(58,46,42,.18)}
+.flip-art{margin:0;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:44px 40px}
+.flip-frame{display:inline-block;padding:16px;background:var(--mat);border:10px solid var(--timber);box-shadow:0 18px 30px -16px rgba(58,46,42,.5),0 2px 4px rgba(58,46,42,.18)}
+.flip-frame img{display:block;max-width:100%;max-height:390px;width:auto;height:auto}
+.flip-photos{display:flex;gap:8px;justify-content:center}
+.flip-photos button{width:44px;height:44px;padding:0;border:1px solid var(--blush-line);border-radius:3px;background:none;cursor:pointer;overflow:hidden;opacity:.65;transition:opacity .2s,border-color .2s}
+.flip-photos button[aria-current],.flip-photos button:hover{opacity:1;border-color:var(--rose-text)}
+.flip-photos img{width:100%;height:100%;object-fit:cover;display:block}
+.flip-text{height:100%;display:flex;flex-direction:column;justify-content:center;padding:48px 56px}
+.flip-count{font-size:13px;font-weight:600;letter-spacing:.14em;color:var(--ink-soft);font-variant-numeric:tabular-nums}
+.flip-count span{color:var(--rose-text)}
+.flip-title{margin-top:14px;font-size:34px;line-height:1.12;text-wrap:balance}
+.flip-meta{margin-top:10px;font-size:15px;color:var(--ink-soft)}
+.flip-story{margin-top:22px;font-size:16.5px;color:var(--ink);max-width:40ch}
+.flip-like{align-self:flex-start;margin-top:28px;font-size:15px}
+/* the turning leaf: old page on the front, the new facing page on the back */
+.leaf{position:absolute;top:0;bottom:0;width:50%;z-index:2;transform-style:preserve-3d;transition:transform .85s cubic-bezier(.45,.05,.2,1)}
+.leaf-fwd{left:50%;transform-origin:left center}
+.leaf-rev{left:0;transform-origin:right center}
+.leaf-fwd.turning{transform:rotateY(-180deg)}
+.leaf-rev.turning{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.face-back{transform:rotateY(180deg)}
+.face::after{content:"";position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .42s ease}
+.leaf-fwd .face-front::after{background:linear-gradient(to right,rgba(58,46,42,.22),transparent 55%)}
+.leaf-fwd .face-back::after{background:linear-gradient(to left,rgba(58,46,42,.22),transparent 55%)}
+.leaf-rev .face-front::after{background:linear-gradient(to left,rgba(58,46,42,.22),transparent 55%)}
+.leaf-rev .face-back::after{background:linear-gradient(to right,rgba(58,46,42,.22),transparent 55%)}
+.leaf.turning .face::after{opacity:1}
+.flip-thumbs{display:flex;gap:10px;justify-content:center;margin:40px auto 0;max-width:1000px;overflow-x:auto;padding:6px 4px 10px;scrollbar-width:thin}
+.flip-thumb{flex:none;width:64px;height:64px;padding:0;border:2px solid transparent;border-radius:4px;background:var(--white);cursor:pointer;overflow:hidden;opacity:.7;transition:opacity .2s,border-color .2s,transform .2s var(--ease)}
+.flip-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.flip-thumb:hover{opacity:1;transform:translateY(-2px)}
+.flip-thumb[aria-current]{opacity:1;border-color:var(--rose-text)}
+.flip-empty{max-width:520px;margin:0 auto;text-align:center;background:var(--white);border:1px solid var(--blush-line);border-radius:6px;padding:44px 32px}
+.flip-empty-h{font:400 24px/1.25 'Gloock',Georgia,serif}
+.flip-empty p+p{margin-top:12px;color:var(--ink-soft)}
+.flip-cta{text-align:center}
+.flip-cta p{margin:14px auto 0;max-width:46ch;color:var(--ink-soft)}
+.flip-cta-acts{display:flex;justify-content:center;flex-wrap:wrap;gap:12px;margin-top:28px}
+
+@media (max-width:960px){
+  .flip-text{padding:40px 36px}
+  .flip-title{font-size:28px}
+  .flip-art{padding:36px 28px}
+}
+@media (max-width:760px){
+  .done-row{grid-template-columns:repeat(2,minmax(0,1fr));gap:22px 16px}
+  .flip-band{padding:40px 0 44px}
+  .flip-stage{grid-template-columns:minmax(0,1fr);gap:0;position:relative}
+  .flip-nav{position:absolute;z-index:3;top:170px;width:44px;height:44px}
+  .flip-prev{left:-6px}
+  .flip-next{right:-6px}
+  .book{grid-template-columns:minmax(0,1fr);min-height:0;transition:transform .22s ease,opacity .22s ease}
+  .book.out-l{transform:translateX(-24px);opacity:0}
+  .book.out-r{transform:translateX(24px);opacity:0}
+  .book.in-r{transform:translateX(24px);opacity:0;transition:none}
+  .book.in-l{transform:translateX(-24px);opacity:0;transition:none}
+  .page-l{border-radius:6px 6px 0 0;box-shadow:inset 0 -20px 24px -22px rgba(58,46,42,.16)}
+  .page-r{border-radius:0 0 6px 6px;box-shadow:none}
+  .flip-art{padding:28px 22px 18px;min-height:340px}
+  .flip-frame{padding:10px;border-width:7px}
+  .flip-frame img{max-height:280px}
+  .flip-text{padding:8px 24px 30px}
+  .flip-title{font-size:25px;margin-top:10px}
+  .flip-story{font-size:16px;margin-top:16px}
+  .flip-thumbs{justify-content:flex-start;margin-top:24px}
+  .flip-thumb{width:56px;height:56px}
+}
+@media (prefers-reduced-motion:reduce){
+  .leaf,.book,.nav-menu,.done-frame{transition:none}
+}

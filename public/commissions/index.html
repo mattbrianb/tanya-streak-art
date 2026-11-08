@@ -29,6 +29,12 @@
     </div>
   </section>
 
+  <section class="sec wrap done-teaser" id="done" aria-labelledby="done-h" hidden>
+    <div class="section-head"><h2 id="done-h">Recently completed</h2><p>A few of the paintings Tanya has made to order.</p></div>
+    <div class="done-row" id="done-row"></div>
+    <p class="done-more"><a class="btn ghost" href="/commissions/completed/">Flip through completed commissions</a></p>
+  </section>
+
   <div class="band">
     <section class="sec wrap" aria-labelledby="how-h">
       <div class="split">
@@ -74,6 +80,14 @@
 <script src="/js/site.js"></script>
 <script>
 Site.boot('/commissions/').then(function (T) {
+  // a peek at finished commissions, each opening the flip-through at that painting
+  if (T.commissions.length) {
+    document.getElementById('done-row').innerHTML = T.commissions.slice(0, 4).map(function (c) {
+      return '<a class="done-item" href="' + c.url + '"><span class="done-frame"><img src="' + Site.esc(c.images[0].md) + '" alt="" loading="lazy"></span>' +
+        '<span class="done-t">' + Site.esc(c.title) + '</span></a>';
+    }).join('');
+    document.getElementById('done').hidden = false;
+  }
   var E = Site.esc, notes = ['For a shelf or bedside table', 'Over a console or desk', 'Above the sofa or bed'];
   document.getElementById('tiers').innerHTML = T.tiers.map(function (t, i) {
     return '<div class="tier"><h3><span class="size-label">' + E(t.label) + '</span> ' + t.longEdge + ' cm</h3><p class="amount">' + Site.rand(t.price) + '</p><p class="note">' + (notes[i] || '') + '</p></div>';

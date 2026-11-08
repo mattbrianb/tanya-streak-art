@@ -47,6 +47,9 @@
       window.TANYA = {
         name: 'Tanya Streak Art', tiers: d.commission_tiers || [],
         paintings: d.paintings.filter(function (p) { return p.images.length; }).map(shape),
+        commissions: (d.commissions || []).filter(function (p) { return p.images.length; }).map(function (p) {
+          var c = shape(p); c.url = '/commissions/completed/#' + p.slug; return c;
+        }),
         sizesFor: sizesFor, rand: rand, priceText: priceText, waLink: waLink,
         orderLink: orderLink, similarLink: similarLink, imgSrc: imgSrc
       };
@@ -81,14 +84,31 @@
     return '<a class="logo" href="/"><img src="/static/logo.png" width="613" height="245" alt="Tanya Streak Art, home"></a>';
   }
 
+  var LS = { get: function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set: function (k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
+
   /* ---------- chrome ---------- */
   var NAV = [['/shop/', 'Shop'], ['/gallery/', 'Gallery'], ['/commissions/', 'Commissions'], ['/about/', 'About']];
+  var DONE = '/commissions/completed/';
+  var CARET = '<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M1.5 3.5L5 7l3.5-3.5"/></svg>';
+  function navLink(n, active) {
+    return '<a href="' + n[0] + '"' + (active === n[0] ? ' aria-current="page"' : '') + '>' + n[1] + '</a>';
+  }
+  // "Commissions" becomes a small menu once there is at least one finished commission to flip through.
+  function comNavHTML(active) {
+    var cur = active === '/commissions/' || active === DONE;
+    return '<div class="nav-drop">' +
+      '<button type="button" class="nav-drop-btn' + (cur ? ' is-current' : '') + '" aria-expanded="false" aria-controls="nav-com">Commissions' + CARET + '</button>' +
+      '<div class="nav-menu" id="nav-com">' +
+        navLink(['/commissions/', 'Commission a painting'], active) + navLink([DONE, 'Completed commissions'], active) +
+      '</div></div>';
+  }
   function header(active) {
+    var drop = LS.get('tsa_com') === '1';
     return '<a class="skip" href="#main">Skip to content</a>' +
       '<div class="announce">Collect in Durban North · Courier across South Africa</div>' +
       '<header class="site">' + logoHTML() +
       '<nav class="main" aria-label="Main">' + NAV.map(function (n) {
-        return '<a href="' + n[0] + '"' + (active === n[0] ? ' aria-current="page"' : '') + '>' + n[1] + '</a>';
+        return n[0] === '/commissions/' && drop ? comNavHTML(active) : navLink(n, active);
       }).join('') +
       '<a class="wa" href="' + waLink('Hi Tanya! I found your website and have a question.') + '" target="_blank" rel="noopener">' + ICON.wa + '<span>WhatsApp</span></a>' +
       '</nav></header>';
@@ -112,6 +132,7 @@
       '<small class="fine">Unsubscribe any time. Tanya never shares your address.</small></div></section>' +
       '<footer class="site"><div class="wrap">' + logoHTML() +
       '<nav class="links" aria-label="Footer">' + NAV.map(function (n) { return '<a href="' + n[0] + '">' + n[1] + '</a>'; }).join('') +
+      '<a href="' + DONE + '" data-done hidden>Completed commissions</a>' +
       '<a href="' + IG + '" target="_blank" rel="noopener">Instagram</a></nav>' +
       '<p class="contact">WhatsApp <a href="' + waLink('Hi Tanya!') + '" target="_blank" rel="noopener">' + PHONE + '</a> · Durban North, KwaZulu-Natal</p>' +
       '<p class="copy">© ' + new Date().getFullYear() + ' Tanya Streak Art · <a href="/unsubscribe/">Unsubscribe</a></p>' +
@@ -123,7 +144,6 @@
     '<symbol id="wa" viewBox="0 0 24 24"><path d="M12 2a10 10 0 00-8.6 15.1L2 22l5-1.3A10 10 0 1012 2zm0 18.2a8.2 8.2 0 01-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1112 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.5.1a6.7 6.7 0 01-3.3-2.9c-.3-.4.3-.4.7-1.4a.5.5 0 000-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 00-.7.3 3 3 0 00-.9 2.2 5.2 5.2 0 001.1 2.7 11.8 11.8 0 004.5 4c1.7.7 2.3.8 3.2.6a2.7 2.7 0 001.8-1.2 2.2 2.2 0 00.1-1.2c0-.1-.2-.2-.5-.3z"/></symbol></svg>';
 
   /* ---------- email sign-up ---------- */
-  var LS = { get: function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set: function (k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
   function bindSubForms(root) {
     (root || document).querySelectorAll('form.subform').forEach(function (f) {
       if (f.dataset.bound) return; f.dataset.bound = '1';
@@ -215,16 +235,46 @@
       .observe(document.body, { childList: true, subtree: true });
   }
 
+  /* ---------- commissions menu ---------- */
+  function bindDrop() {
+    var d = document.querySelector('nav.main .nav-drop');
+    if (!d || d.dataset.bound) return;
+    d.dataset.bound = '1';
+    var b = d.querySelector('.nav-drop-btn');
+    function set(open) { d.classList.toggle('open', open); b.setAttribute('aria-expanded', String(open)); }
+    b.addEventListener('click', function () { set(!d.classList.contains('open')); });
+    document.addEventListener('click', function (e) { if (!d.contains(e.target)) set(false); });
+    d.addEventListener('keydown', function (e) { if (e.key === 'Escape' && d.classList.contains('open')) { set(false); b.focus(); } });
+    d.addEventListener('focusout', function (e) { if (e.relatedTarget && !d.contains(e.relatedTarget)) set(false); });
+  }
+  // Match the menu to what's live (the first visit guesses from the last one, so there's rarely a jump).
+  function syncCommissions(T, active) {
+    var has = T.commissions.length > 0;
+    LS.set('tsa_com', has ? '1' : '0');
+    var nav = document.querySelector('nav.main'), drop = nav && nav.querySelector('.nav-drop');
+    if (nav && has && !drop) {
+      var a = nav.querySelector('a[href="/commissions/"]');
+      if (a) a.outerHTML = comNavHTML(active);
+    } else if (nav && !has && drop) {
+      drop.outerHTML = navLink(['/commissions/', 'Commissions'], active);
+    }
+    bindDrop();
+    var f = document.querySelector('footer.site [data-done]');
+    if (f) f.hidden = !has;
+  }
+
   /* ---------- boot ---------- */
   function boot(active) {
     document.body.insertAdjacentHTML('afterbegin', SYMBOLS);
     var h = document.getElementById('site-header'), f = document.getElementById('site-footer');
     if (h) h.outerHTML = header(active);
     if (f) f.outerHTML = footer();
+    bindDrop();
     bindSubForms();
     schedulePop();
     document.querySelectorAll('[data-wa]').forEach(function (a) { a.href = waLink(a.dataset.wa); a.target = '_blank'; a.rel = 'noopener'; });
     return load().then(function (T) {
+      syncCommissions(T, active);
       Wallroom.init({ base: '', wallName: 'Blush white', frame: 'timber', frameName: 'Timber & mat' });
       watchRooms(T);
       return T;

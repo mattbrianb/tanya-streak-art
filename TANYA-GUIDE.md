@@ -17,6 +17,15 @@ Go to **My paintings** and tap **Mark as sold**. It moves out of the Shop and st
 
 If you'd rather it disappear completely, open it and choose **Hidden**.
 
+## Finished commissions
+Paintings you've made for people go in a flip-through on your website called **Completed commissions** (under **Commissions** in the menu).
+1. On the home screen, tap **Finished commissions**, then **Add new**.
+2. Add photos. The first is the one people see first; a photo of it hanging in its new home is a lovely second.
+3. Add the name, size and medium, and a line or two in **The story**: who it was for or the occasion. First names only is best.
+4. Choose **Show it**, then tap **Save commission**.
+
+The **Commissions** menu on your website gets its "Completed commissions" link as soon as the first one is saved. To take one off the website without deleting it, tap **Hide from website**.
+
 ## Your email list
 - People join from the pop-up box on your website or from the bottom of every page.
 - In **Subscribers**, tap **Copy all emails**. Then start a new email in Gmail and paste them into the **BCC** box, so nobody sees anyone else's address.

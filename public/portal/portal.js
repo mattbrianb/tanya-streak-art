@@ -61,7 +61,8 @@
     download: svg('<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>'),
     alert: svg('<circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>'),
     x: svg('<path d="M18 6 6 18M6 6l12 12"/>'),
-    mail: svg('<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/>')
+    mail: svg('<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/>'),
+    book: svg('<path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/>')
   };
 
   // ---------- Talking to the website ----------
@@ -239,6 +240,9 @@
     [/^#\/paintings$/, viewPaintings],
     [/^#\/paintings\/new$/, viewEditor],
     [/^#\/paintings\/(\d+)$/, viewEditor],
+    [/^#\/commissions$/, viewCommissions],
+    [/^#\/commissions\/new$/, viewCommissionEditor],
+    [/^#\/commissions\/(\d+)$/, viewCommissionEditor],
     [/^#\/subscribers$/, viewSubscribers],
     [/^#\/settings$/, viewSettings]
   ];
@@ -387,12 +391,14 @@
   // ---------- Home ----------
 
   function countsText(c) {
-    if (!c) return { paint: '<span class="skel-line"></span>', subs: '<span class="skel-line"></span>' };
+    if (!c) return { paint: '<span class="skel-line"></span>', subs: '<span class="skel-line"></span>', com: '<span class="skel-line"></span>' };
     let paint = `${commas(c.available)} for sale · ${commas(c.sold)} sold`;
     if (c.hidden) paint += ` · ${commas(c.hidden)} hidden`;
     let subs = plural(c.subscribers, 'person', 'people');
     if (c.new_subscribers) subs += ` · +${commas(c.new_subscribers)} this week`;
-    return { paint: esc(paint), subs: esc(subs) };
+    let com = c.commissions ? `${commas(c.commissions)} on your website` : 'None yet: add your first';
+    if (c.commissions_hidden) com += ` · ${commas(c.commissions_hidden)} hidden`;
+    return { paint: esc(paint), subs: esc(subs), com: esc(com) };
   }
 
   function viewHome(m, alive) {
@@ -408,6 +414,8 @@
       <ul class="tiles">
         <li><a class="tile" href="#/paintings"><span class="tile-icon">${I.frame}</span>
           <span class="tile-text"><strong>My paintings</strong><span id="c-paint">${t.paint}</span></span>${I.chev}</a></li>
+        <li><a class="tile" href="#/commissions"><span class="tile-icon">${I.book}</span>
+          <span class="tile-text"><strong>Finished commissions</strong><span id="c-com">${t.com}</span></span>${I.chev}</a></li>
         <li><a class="tile" href="#/subscribers"><span class="tile-icon">${I.people}</span>
           <span class="tile-text"><strong>Subscribers</strong><span id="c-subs">${t.subs}</span></span>${I.chev}</a></li>
         <li><a class="tile" href="#/settings"><span class="tile-icon">${I.gear}</span>
@@ -431,29 +439,55 @@
       const t2 = countsText(r.counts);
       $('#c-paint').innerHTML = t2.paint;
       $('#c-subs').innerHTML = t2.subs;
+      $('#c-com').innerHTML = t2.com;
     }).catch(e => {
       if (!alive() || quiet(e)) return;
       $('#home-err').innerHTML = `<div class="notice notice-error" role="alert" style="margin-top:18px"><p>${esc(e.message)}</p>
         <button type="button" class="btn btn-secondary" id="home-retry">Try again</button></div>`;
       $('#home-retry').addEventListener('click', () => route());
-      if (!meCache) { $('#c-paint').textContent = 'See all'; $('#c-subs').textContent = 'See the list'; }
+      if (!meCache) { $('#c-paint').textContent = 'See all'; $('#c-subs').textContent = 'See the list'; $('#c-com').textContent = 'See all'; }
     });
   }
 
   // ---------- My paintings ----------
 
-  let paintingsCache = null;
+  let paintingsCache = null;     // paintings and finished commissions together, as the admin API returns them
 
-  function viewPaintings(m, alive) {
+  const LIST = {
+    painting: {
+      title: 'My paintings', base: '#/paintings', filterKey: 'tsa_filter', loadingText: 'Loading your paintings…',
+      tabs: [['all', 'All'], ['available', 'For sale'], ['sold', 'Sold'], ['hidden', 'Hidden']],
+      emptyH: 'No paintings yet', emptyP: 'Add your first painting and it will appear on your website straight away.', emptyBtn: 'Add a new painting',
+      none: { available: 'None of your paintings are for sale right now.', sold: 'None of your paintings are marked as sold right now.', hidden: 'None of your paintings are hidden right now.' },
+      showAll: 'Show all paintings'
+    },
+    commission: {
+      title: 'Finished commissions', base: '#/commissions', filterKey: 'tsa_cfilter', loadingText: 'Loading your commissions…',
+      tabs: [['all', 'All'], ['available', 'On website'], ['hidden', 'Hidden']],
+      emptyH: 'No finished commissions yet',
+      emptyP: 'Add photos of paintings you’ve made for people. They appear in a flip-through on your website called “Completed commissions”.',
+      emptyBtn: 'Add a finished commission',
+      none: { available: 'None of your commissions are on your website right now.', hidden: 'None of your commissions are hidden right now.' },
+      showAll: 'Show all commissions'
+    }
+  };
+  const kindOf = p => p.kind || 'painting';
+
+  function viewPaintings(m, alive) { listView(m, alive, 'painting'); }
+  function viewCommissions(m, alive) { listView(m, alive, 'commission'); }
+
+  function listView(m, alive, kind) {
+    const L = LIST[kind], isCom = kind === 'commission';
+    const mine = () => (paintingsCache || []).filter(p => kindOf(p) === kind);
     setBar({ href: '#/', label: 'Home' });
-    const head = `<div class="list-head"><h1 tabindex="-1">My paintings</h1>
-      <a class="btn btn-primary btn-small" href="#/paintings/new">${I.plus}Add new</a></div>`;
+    const head = `<div class="list-head"><h1 tabindex="-1">${L.title}</h1>
+      <a class="btn btn-primary btn-small" href="${L.base}/new">${I.plus}Add new</a></div>`;
     let mounted = false;
     const draw = list => render(list, alive);
     if (paintingsCache) draw(paintingsCache); else loadingWithHead();
     function loadingWithHead() {
-      mount(`${head}<p class="loading-text" role="status">Loading your paintings…</p>
-        <div class="skel-list" aria-hidden="true"><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>`, 'My paintings');
+      mount(`${head}<p class="loading-text" role="status">${L.loadingText}</p>
+        <div class="skel-list" aria-hidden="true"><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>`, L.title);
     }
     api('GET', '/api/admin/paintings').then(r => {
       paintingsCache = r.paintings;
@@ -461,7 +495,7 @@
     }).catch(e => {
       if (!alive() || quiet(e)) return;
       if (paintingsCache) toast(e.message, { error: true });
-      else failed('My paintings', e, () => route(), { href: '#/', label: 'Back to home' });
+      else failed(L.title, e, () => route(), { href: '#/', label: 'Back to home' });
     });
 
     function render(list, alive) {
@@ -469,15 +503,15 @@
       if (!mounted) {
         mount(`${head}
           <div class="tabs" role="group" aria-label="Show">
-            ${[['all', 'All'], ['available', 'For sale'], ['sold', 'Sold'], ['hidden', 'Hidden']].map(([v, l]) =>
+            ${L.tabs.map(([v, l]) =>
               `<button type="button" class="tab" data-filter="${v}" aria-pressed="false">${l} <span class="tab-n" data-n="${v}"></span></button>`).join('')}
           </div>
-          <div id="plist-wrap"></div>`, 'My paintings');
+          <div id="plist-wrap"></div>`, L.title);
         mounted = true;
         $('.tabs').addEventListener('click', e => {
           const b = e.target.closest('[data-filter]');
           if (!b) return;
-          store.set('tsa_filter', b.dataset.filter);
+          store.set(L.filterKey, b.dataset.filter);
           paint();
         });
         $('#plist-wrap').addEventListener('click', onToggle);
@@ -486,8 +520,9 @@
     }
 
     function paint(focusId) {
-      const list = paintingsCache || [];
-      const filter = store.get('tsa_filter') || 'all';
+      const list = mine();
+      let filter = store.get(L.filterKey) || 'all';
+      if (!L.tabs.some(t => t[0] === filter)) filter = 'all';
       $$('.tab').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.filter === filter)));
       const n = { all: list.length, available: 0, sold: 0, hidden: 0 };
       list.forEach(p => { n[p.status] = (n[p.status] || 0) + 1; });
@@ -495,16 +530,15 @@
       const shown = filter === 'all' ? list : list.filter(p => p.status === filter);
       const wrap = $('#plist-wrap');
       if (!list.length) {
-        wrap.innerHTML = `<div class="empty">${I.frame}<h2>No paintings yet</h2>
-          <p>Add your first painting and it will appear on your website straight away.</p>
-          <a class="btn btn-primary" href="#/paintings/new">${I.plus}Add a new painting</a></div>`;
+        wrap.innerHTML = `<div class="empty">${isCom ? I.book : I.frame}<h2>${L.emptyH}</h2>
+          <p>${L.emptyP}</p>
+          <a class="btn btn-primary" href="${L.base}/new">${I.plus}${L.emptyBtn}</a></div>`;
         return;
       }
       if (!shown.length) {
-        const word = { available: 'for sale', sold: 'marked as sold', hidden: 'hidden' }[filter];
-        wrap.innerHTML = `<div class="empty"><h2>Nothing here</h2><p>None of your paintings are ${word} right now.</p>
-          <button type="button" class="btn btn-secondary" data-show-all>Show all paintings</button></div>`;
-        $('[data-show-all]', wrap).addEventListener('click', () => { store.set('tsa_filter', 'all'); paint(); });
+        wrap.innerHTML = `<div class="empty"><h2>Nothing here</h2><p>${L.none[filter]}</p>
+          <button type="button" class="btn btn-secondary" data-show-all>${L.showAll}</button></div>`;
+        $('[data-show-all]', wrap).addEventListener('click', () => { store.set(L.filterKey, 'all'); paint(); });
         return;
       }
       wrap.innerHTML = `<ul class="plist">${shown.map(card).join('')}</ul>`;
@@ -516,22 +550,23 @@
 
     function card(p) {
       const cover = p.images && p.images[0];
-      const s = STATUS[p.status] || STATUS.available;
+      const s = isCom ? (p.status === 'hidden' ? STATUS.hidden : { label: 'On website', cls: 'pill-sale' }) : (STATUS[p.status] || STATUS.available);
       const meta = [sizeText(p), p.medium].filter(Boolean).join(' · ');
-      const toggleLabel = p.status === 'sold' ? 'Put back on sale' : p.status === 'hidden' ? 'Put on sale' : 'Mark as sold';
+      const toggleLabel = isCom ? (p.status === 'hidden' ? 'Show on website' : 'Hide from website')
+        : p.status === 'sold' ? 'Put back on sale' : p.status === 'hidden' ? 'Put on sale' : 'Mark as sold';
       return `<li class="pcard">
-        <a class="pcard-main" href="#/paintings/${p.id}">
+        <a class="pcard-main" href="${L.base}/${p.id}">
           <span class="pcard-img">${cover ? `<img src="${esc(cover.md)}" alt="" loading="lazy" decoding="async">` : 'No photo yet'}</span>
           <span class="pcard-body">
             <span class="pill ${s.cls}">${s.label}</span>
             <span class="pcard-title">${esc(p.title)}</span>
             ${meta ? `<span class="pcard-meta">${esc(meta)}</span>` : ''}
-            <span class="pcard-price">${esc(money(p.price))}</span>
+            ${isCom ? '' : `<span class="pcard-price">${esc(money(p.price))}</span>`}
           </span>
         </a>
         <div class="pcard-actions">
           <button type="button" class="btn btn-secondary btn-small" data-toggle="${p.id}">${toggleLabel}</button>
-          <a class="btn btn-ghost btn-small btn-edit" href="#/paintings/${p.id}" aria-label="Edit ${esc(p.title)}">Edit</a>
+          <a class="btn btn-ghost btn-small btn-edit" href="${L.base}/${p.id}" aria-label="Edit ${esc(p.title)}">Edit</a>
         </div>
       </li>`;
     }
@@ -550,14 +585,15 @@
       const p = (paintingsCache || []).find(x => x.id === id);
       if (!p) return;
       const prev = p.status;
-      const next = prev === 'sold' ? 'available' : prev === 'hidden' ? 'available' : 'sold';
+      const next = isCom ? (prev === 'hidden' ? 'available' : 'hidden') : prev === 'sold' ? 'available' : prev === 'hidden' ? 'available' : 'sold';
       btn.disabled = true;
       btn.textContent = 'Saving…';
       try {
         const updated = await setStatus(id, next);
         if (!alive()) return;
         paint(id);
-        const msg = next === 'sold' ? `“${updated.title}” is marked as sold.` : `“${updated.title}” is for sale again.`;
+        const msg = isCom ? (next === 'hidden' ? `“${updated.title}” is hidden from your website.` : `“${updated.title}” is on your website.`)
+          : next === 'sold' ? `“${updated.title}” is marked as sold.` : `“${updated.title}” is for sale again.`;
         toast(msg, {
           action: 'Undo',
           onAction: async () => {
@@ -578,23 +614,56 @@
 
   // ---------- Add / edit a painting ----------
 
-  async function viewEditor(m, alive) {
+  const ED = {
+    painting: {
+      base: '#/paintings', back: 'My paintings', newTitle: 'Add a new painting', editTitle: 'Edit painting',
+      lede: 'Start with photos, then fill in the details and tap Save.',
+      photosHint: 'The first photo is the cover people see in your shop. A close-up of the paint is lovely as a second photo.',
+      namePh: 'For example: Pink roses in a blue jug',
+      descLabel: 'Description', descPh: 'A few friendly sentences: what you painted, the colours, what inspired it, or where it would look lovely.',
+      legend: 'Is it for sale?',
+      choices: [['available', 'For sale', 'On your website with its price'], ['sold', 'Sold', 'On your website, marked “Sold”'], ['hidden', 'Hidden', 'Hidden from your website']],
+      save: 'Save painting', another: 'Add another painting', backTo: 'Back to my paintings', keep: 'Keep editing this painting',
+      delH: 'Delete this painting', delBtn: 'Delete painting',
+      where: { available: 'It’s on your website now, marked “For sale”.', sold: 'It’s on your website, marked “Sold”.', hidden: 'It’s saved, but hidden from your website.' },
+      link: p => `/painting/${encodeURIComponent(p.slug)}`
+    },
+    commission: {
+      base: '#/commissions', back: 'Finished commissions', newTitle: 'Add a finished commission', editTitle: 'Edit commission',
+      lede: 'Add photos of a painting you made for someone, then a few details. It goes into the “Completed commissions” flip-through on your website.',
+      photosHint: 'The first photo is the one people see first. A photo of it hanging in its new home is a lovely second photo.',
+      namePh: 'For example: Roses for Sarah’s new home',
+      descLabel: 'The story', descPh: 'Who it was for or the occasion. For example: “A wedding bouquet for Sarah and James, painted from their photos.” First names only is best.',
+      legend: 'Show it on your website?',
+      choices: [['available', 'Show it', 'In “Completed commissions” on your website'], ['hidden', 'Hide it', 'Saved here, but not on your website']],
+      save: 'Save commission', another: 'Add another commission', backTo: 'Back to finished commissions', keep: 'Keep editing this commission',
+      delH: 'Delete this commission', delBtn: 'Delete commission',
+      where: { available: 'It’s in “Completed commissions” on your website now.', hidden: 'It’s saved, but hidden from your website.' },
+      link: p => `/commissions/completed/#${encodeURIComponent(p.slug)}`
+    }
+  };
+
+  function viewEditor(m, alive) { openEditor(m, alive, 'painting'); }
+  function viewCommissionEditor(m, alive) { openEditor(m, alive, 'commission'); }
+
+  async function openEditor(m, alive, kind) {
     const id = m[1] ? Number(m[1]) : null;
-    setBar({ href: '#/paintings', label: 'My paintings' });
-    if (!id) { editor(null, alive); return; }
-    loading('Edit painting');
+    setBar({ href: ED[kind].base, label: ED[kind].back });
+    if (!id) { editor(null, alive, kind); return; }
+    loading(ED[kind].editTitle);
     try {
       const { painting } = await api('GET', `/api/admin/paintings/${id}`);
-      if (alive()) editor(painting, alive);
+      if (alive()) editor(painting, alive, kindOf(painting));
     } catch (e) {
       if (!alive() || quiet(e)) return;
-      failed('Edit painting', e, () => route(), { href: '#/paintings', label: 'Back to my paintings' });
+      failed(ED[kind].editTitle, e, () => route(), { href: ED[kind].base, label: ED[kind].backTo });
     }
   }
 
-  function editor(p, alive) {
+  function editor(p, alive, kind) {
     let painting = p;
     const isNew = !p;
+    const E = ED[kind], isCom = kind === 'commission';
     const photos = (p ? p.images : []).map(im => ({ key: uid(), id: im.id, url: im.md, status: 'done' }));
     let chain = Promise.resolve();
     let orderDirty = false;
@@ -602,14 +671,14 @@
 
     const v = p || { title: '', medium: 'Oil on canvas', description: '', width_cm: null, height_cm: null, price: null, status: 'available' };
     const knownMedium = !v.medium || MEDIUMS.includes(v.medium);
-    const title = isNew ? 'Add a new painting' : 'Edit painting';
+    const title = isNew ? E.newTitle : E.editTitle;
 
     mount(`<h1 tabindex="-1">${title}</h1>
-      ${isNew ? '<p class="lede">Start with photos, then fill in the details and tap Save.</p>' : ''}
+      ${isNew ? `<p class="lede">${E.lede}</p>` : ''}
       <form id="ed" novalidate>
         <section class="card" aria-labelledby="h-photos">
           <h2 id="h-photos">Photos</h2>
-          <p class="section-hint">The first photo is the cover people see in your shop. A close-up of the paint is lovely as a second photo.</p>
+          <p class="section-hint">${E.photosHint}</p>
           <ul class="photos" id="photos"></ul>
           <input type="file" id="file" accept="image/*" multiple class="visually-hidden" tabindex="-1" aria-hidden="true">
         </section>
@@ -619,7 +688,7 @@
           <div class="field">
             <label for="f-title">Name of painting</label>
             <input type="text" id="f-title" maxlength="120" autocapitalize="sentences" autocomplete="off" required
-              value="${esc(v.title)}" placeholder="For example: Pink roses in a blue jug" aria-describedby="e-title">
+              value="${esc(v.title)}" placeholder="${E.namePh}" aria-describedby="e-title">
             <p class="field-error" id="e-title" hidden></p>
           </div>
 
@@ -652,26 +721,24 @@
             </div>
           </div>
 
-          <div class="field">
+          ${isCom ? '' : `<div class="field">
             <label for="f-price">Price</label>
             <div class="affix prefix"><span>R</span><input type="number" id="f-price" inputmode="numeric" min="0" step="1" value="${v.price ?? ''}" aria-describedby="h-price e-price"></div>
             <p class="hint" id="h-price">Leave blank to show “Price on request”.</p>
             <p class="field-error" id="e-price" hidden></p>
-          </div>
+          </div>`}
 
           <div class="field">
-            <label for="f-desc">Description <span class="opt">(optional)</span></label>
-            <textarea id="f-desc" maxlength="2000" rows="5" placeholder="A few friendly sentences: what you painted, the colours, what inspired it, or where it would look lovely.">${esc(v.description)}</textarea>
+            <label for="f-desc">${E.descLabel} <span class="opt">(optional)</span></label>
+            <textarea id="f-desc" maxlength="2000" rows="5" placeholder="${E.descPh}">${esc(v.description)}</textarea>
           </div>
         </section>
 
         <section class="card">
           <fieldset>
-            <legend class="legend-h2">Is it for sale?</legend>
+            <legend class="legend-h2">${E.legend}</legend>
             <div class="choices" style="margin-top:10px">
-              ${[['available', 'For sale', 'On your website with its price'],
-                 ['sold', 'Sold', 'On your website, marked “Sold”'],
-                 ['hidden', 'Hidden', 'Hidden from your website']].map(([val, l, d]) => `
+              ${E.choices.map(([val, l, d]) => `
                 <label class="choice"><input type="radio" name="status" value="${val}"${v.status === val ? ' checked' : ''}>
                   <span class="choice-dot" aria-hidden="true"></span>
                   <span><strong>${l}</strong><span class="choice-sub">${d}</span></span></label>`).join('')}
@@ -681,13 +748,13 @@
 
         <div class="savebar">
           <p class="save-status" id="save-status" role="status" aria-live="polite"></p>
-          <button type="submit" class="btn btn-primary btn-block" id="save-btn">${isNew ? 'Save painting' : 'Save changes'}</button>
+          <button type="submit" class="btn btn-primary btn-block" id="save-btn">${isNew ? E.save : 'Save changes'}</button>
         </div>
       </form>
       ${isNew ? '' : `<section class="danger-zone" aria-labelledby="h-del">
-        <h2 id="h-del">Delete this painting</h2>
+        <h2 id="h-del">${E.delH}</h2>
         <p>This takes it off your website for good, with all its photos.</p>
-        <button type="button" class="btn btn-danger btn-block" id="del-btn">${I.trash}Delete painting</button>
+        <button type="button" class="btn btn-danger btn-block" id="del-btn">${I.trash}${E.delBtn}</button>
       </section>`}`, title);
 
     document.body.classList.add('has-savebar');
@@ -708,9 +775,10 @@
         width_cm: f.w.value,
         height_cm: f.h.value,
         medium: f.medium.value === '__other' ? f.other.value.trim() : f.medium.value,
-        price: f.price.value,
+        price: f.price ? f.price.value : '',
         description: f.desc.value.trim(),
-        status: st ? st.value : 'available'
+        status: st ? st.value : 'available',
+        kind
       };
     }
     let initial = JSON.stringify(readFields());
@@ -942,12 +1010,12 @@
         await api('DELETE', `/api/admin/paintings/${painting.id}`);
         paintingsCache = null; meCache = null;
         guard = null;
-        go('#/paintings');
+        go(E.base);
         toast(`“${name}” was deleted.`);
       } catch (e) {
         if (quiet(e)) return;
         delBtn.disabled = false;
-        delBtn.lastChild.textContent = 'Delete painting';
+        delBtn.lastChild.textContent = E.delBtn;
         toast(e.message, { error: true });
       }
     });
@@ -979,7 +1047,7 @@
         bad(f.w.value === '' ? f.w : f.h, $('#e-size'), 'Please fill in both the width and the height, or leave both blank.');
       }
       if (f.medium.value === '__other' && !vals.medium) bad(f.other, $('#e-medium'), 'Please type the medium, or pick one from the list.');
-      if ((f.price.validity && f.price.validity.badInput) || (f.price.value !== '' && !(Number(f.price.value) >= 0))) {
+      if (f.price && ((f.price.validity && f.price.validity.badInput) || (f.price.value !== '' && !(Number(f.price.value) >= 0)))) {
         bad(f.price, $('#e-price'), 'The price should be a number in rand, for example 2500.');
       }
       if (first) {
@@ -1013,7 +1081,7 @@
       try {
         if (!painting) {
           painting = (await api('POST', '/api/admin/paintings', body)).painting;
-          const h = `#/paintings/${painting.id}`;
+          const h = `${E.base}/${painting.id}`;
           history.replaceState(null, '', h);
           current = h;
         } else {
@@ -1051,7 +1119,7 @@
         saving = false;
         if (alive() && document.contains(saveBtn)) {
           saveBtn.disabled = false;
-          saveBtn.textContent = painting ? 'Save changes' : 'Save painting';
+          saveBtn.textContent = painting ? 'Save changes' : E.save;
         }
       }
     });
@@ -1060,21 +1128,17 @@
       document.body.classList.remove('has-savebar');
       const pnt = painting;
       const cover = photos.find(ph => ph.id && ph.url);
-      const where = {
-        available: 'It’s on your website now, marked “For sale”.',
-        sold: 'It’s on your website, marked “Sold”.',
-        hidden: 'It’s saved, but hidden from your website.'
-      }[pnt.status] || '';
+      const where = E.where[pnt.status] || '';
       mount(`<div class="success">
         <div class="success-mark">${I.check}</div>
         <h1 tabindex="-1">Saved!</h1>
         <p class="lede">“${esc(pnt.title)}”. ${where}</p>
         ${cover ? `<img class="success-img" src="${esc(cover.url)}" alt="">` : ''}
         <div class="stack">
-          ${pnt.status !== 'hidden' ? `<a class="btn btn-primary btn-block" href="/painting/${encodeURIComponent(pnt.slug)}" target="_blank" rel="noopener">${I.external}View on website</a>` : ''}
-          <a class="btn btn-secondary btn-block" href="#/paintings/new">${I.plus}Add another painting</a>
-          <a class="btn btn-ghost btn-block" href="#/paintings">Back to my paintings</a>
-          <button type="button" class="btn-link" id="keep-editing">Keep editing this painting</button>
+          ${pnt.status !== 'hidden' ? `<a class="btn btn-primary btn-block" href="${E.link(pnt)}" target="_blank" rel="noopener">${I.external}View on website</a>` : ''}
+          <a class="btn btn-secondary btn-block" href="${E.base}/new">${I.plus}${E.another}</a>
+          <a class="btn btn-ghost btn-block" href="${E.base}">${E.backTo}</a>
+          <button type="button" class="btn-link" id="keep-editing">${E.keep}</button>
         </div>
       </div>`, 'Saved');
       const h1 = $('h1', app);
