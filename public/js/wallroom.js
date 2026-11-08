@@ -35,8 +35,8 @@
 
     var tones = [['theme', opts.wallName, 'var(--wr-wall, #ECE7DF)'], ['white', 'Gallery white', '#F1EFEA'], ['plaster', 'Warm plaster', '#E3D3BD'], ['sage', 'Sage', '#B9C2AE'], ['charcoal', 'Charcoal', '#34322F']];
     var textures = [['brick', 'Exposed brick'], ['brick-white', 'Painted brick'], ['concrete', 'Concrete'], ['oak', 'Oak panelling'], ['limewash', 'Limewash']];
-    textures.forEach(function (t) { t.push('url(' + opts.textures + t[0] + '-s.jpg) center / cover'); });
-    var swatchBtn = function (t) { return '<button type="button" class="wr-chip wr-tone" data-tone="' + t[0] + '" data-name="' + t[1] + '" aria-pressed="false" aria-label="' + t[1] + ' wall" title="' + t[1] + '"><i class="wr-swatch" style="background:' + t[2] + '"></i></button>'; };
+    textures.forEach(function (t) { t.push('url(' + opts.textures + t[0] + '-s.jpg) center / cover', true); });
+    var swatchBtn = function (t) { return '<button type="button" class="wr-chip wr-tone" data-tone="' + t[0] + '" data-name="' + t[1] + '"' + (t[3] ? ' data-tex' : '') + ' aria-pressed="false" aria-label="' + t[1] + ' wall" title="' + t[1] + '"><i class="wr-swatch" style="background:' + t[2] + '"></i></button>'; };
     var frames = [['canvas', 'Canvas edge'], ['float', 'Black float'], ['oak', 'Oak']];
     if (opts.frameName) frames.unshift([opts.frame, opts.frameName]);
 
@@ -82,6 +82,10 @@
     el.querySelectorAll('[data-tone]').forEach(function (b) {
       if (b === el) return;
       b.addEventListener('click', function () { el.dataset.tone = b.dataset.tone; syncChips(); });
+      // start fetching a texture as soon as someone points at or touches its swatch, so it's ready by the tap
+      if (b.hasAttribute('data-tex')) ['pointerenter', 'focus', 'touchstart'].forEach(function (ev) {
+        b.addEventListener(ev, function () { warmTexture(b.dataset.tone); }, { passive: true });
+      });
     });
     el.querySelectorAll('.wr-chip[data-frame]').forEach(function (b) {
       b.addEventListener('click', function () { el.dataset.frame = b.dataset.frame; syncChips(); });
@@ -103,6 +107,13 @@
       if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.3) go(dx < 0 ? 1 : -1);
       setTimeout(function () { moved = false; }, 0);
     });
+  }
+
+  var warmed = {};
+  function warmTexture(tone) {
+    if (warmed[tone]) return;
+    warmed[tone] = true;
+    new Image().src = opts.textures + tone + '.jpg';
   }
 
   function syncChips() {
