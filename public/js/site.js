@@ -2,7 +2,7 @@
    Loads live paintings from /api, renders the header, footer, painting cards, sign-up forms
    and pop-up, and feeds the Wallroom. */
 (function () {
-  var WHATSAPP = '27792763413', PHONE = '079 276 3413', IG = 'https://www.instagram.com/tanyastreakart/';
+  var WHATSAPP = '27792763413', PHONE = '079 276 3413', IG = 'https://www.instagram.com/tanyastreakart/', FB = 'https://www.facebook.com/tanyastreakart';
 
   /* ---------- formatting & links ---------- */
   function rand(n) { return 'R' + Math.round(n).toLocaleString('en-ZA').replace(/\s| /g, ','); }
@@ -62,6 +62,8 @@
   /* ---------- pieces ---------- */
   var ICON = {
     wa: '<svg viewBox="0 0 24 24" aria-hidden="true"><use href="#wa"/></svg>',
+    ig: '<svg viewBox="0 0 24 24" aria-hidden="true"><use href="#ig"/></svg>',
+    fb: '<svg viewBox="0 0 24 24" aria-hidden="true"><use href="#fb"/></svg>',
     wall: '<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="2" width="11" height="8.5"/><path d="M1 14h14M5 14v-1.5h6V14"/></svg>'
   };
 
@@ -113,6 +115,7 @@
       }).join('') +
       (LS.get('tsa_xmas') === '1' ? xmasNavHTML() : '') +
       '<a class="wa" href="' + waLink('Hi Tanya! I found your website and have a question.') + '" target="_blank" rel="noopener">' + ICON.wa + '<span>WhatsApp</span></a>' +
+      '<span class="social">' + socialLinks('') + '</span>' +
       '</nav></header>';
   }
 
@@ -134,16 +137,26 @@
       '<small class="fine">Unsubscribe any time. Tanya never shares your address.</small></div></section>' +
       '<footer class="site"><div class="wrap">' + logoHTML() +
       '<nav class="links" aria-label="Footer">' + NAV.map(function (n) { return '<a href="' + n[0] + '">' + n[1] + '</a>'; }).join('') +
-      '<a href="' + DONE + '" data-done hidden>Completed commissions</a>' +
-      '<a href="' + IG + '" target="_blank" rel="noopener">Instagram</a></nav>' +
+      '<a href="' + DONE + '" data-done hidden>Completed commissions</a></nav>' +
+      '<div class="follow"><p>Follow Tanya for new work and studio news</p><div class="follow-links">' + socialLinks('labels') + '</div></div>' +
       '<p class="contact">WhatsApp <a href="' + waLink('Hi Tanya!') + '" target="_blank" rel="noopener">' + PHONE + '</a> · Durban North, KwaZulu-Natal</p>' +
       '<p class="copy">© ' + new Date().getFullYear() + ' Tanya Streak Art · <a href="/unsubscribe/">Unsubscribe</a></p>' +
       '</div></footer>' +
       '<a class="wa-float" href="' + waLink('Hi Tanya! I found your website and have a question.') + '" target="_blank" rel="noopener" aria-label="Message Tanya on WhatsApp">' + ICON.wa + '</a>';
   }
 
+  // Instagram + Facebook. With labels in the footer; icon-only (named for screen readers) in the header.
+  function socialLinks(labels) {
+    return [[IG, 'ig', 'Instagram'], [FB, 'fb', 'Facebook']].map(function (s) {
+      return '<a class="soc soc-' + s[1] + '" href="' + s[0] + '" target="_blank" rel="noopener"' + (labels ? '' : ' aria-label="Tanya on ' + s[2] + '" title="' + s[2] + '"') + '>' +
+        ICON[s[1]] + (labels ? '<span>' + s[2] + '</span>' : '') + '</a>';
+    }).join('');
+  }
+
   var SYMBOLS = '<svg class="defs" aria-hidden="true" focusable="false">' +
-    '<symbol id="wa" viewBox="0 0 24 24"><path d="M12 2a10 10 0 00-8.6 15.1L2 22l5-1.3A10 10 0 1012 2zm0 18.2a8.2 8.2 0 01-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1112 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.5.1a6.7 6.7 0 01-3.3-2.9c-.3-.4.3-.4.7-1.4a.5.5 0 000-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 00-.7.3 3 3 0 00-.9 2.2 5.2 5.2 0 001.1 2.7 11.8 11.8 0 004.5 4c1.7.7 2.3.8 3.2.6a2.7 2.7 0 001.8-1.2 2.2 2.2 0 00.1-1.2c0-.1-.2-.2-.5-.3z"/></symbol></svg>';
+    '<symbol id="wa" viewBox="0 0 24 24"><path d="M12 2a10 10 0 00-8.6 15.1L2 22l5-1.3A10 10 0 1012 2zm0 18.2a8.2 8.2 0 01-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1112 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.5.1a6.7 6.7 0 01-3.3-2.9c-.3-.4.3-.4.7-1.4a.5.5 0 000-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 00-.7.3 3 3 0 00-.9 2.2 5.2 5.2 0 001.1 2.7 11.8 11.8 0 004.5 4c1.7.7 2.3.8 3.2.6a2.7 2.7 0 001.8-1.2 2.2 2.2 0 00.1-1.2c0-.1-.2-.2-.5-.3z"/></symbol>' +
+    '<symbol id="ig" viewBox="0 0 24 24"><path d="M7.8 2h8.4A5.8 5.8 0 0122 7.8v8.4a5.8 5.8 0 01-5.8 5.8H7.8A5.8 5.8 0 012 16.2V7.8A5.8 5.8 0 017.8 2zm0 1.9A3.9 3.9 0 003.9 7.8v8.4a3.9 3.9 0 003.9 3.9h8.4a3.9 3.9 0 003.9-3.9V7.8a3.9 3.9 0 00-3.9-3.9H7.8zM12 7a5 5 0 110 10 5 5 0 010-10zm0 1.9a3.1 3.1 0 100 6.2 3.1 3.1 0 000-6.2zm5.3-3.4a1.2 1.2 0 110 2.4 1.2 1.2 0 010-2.4z"/></symbol>' +
+    '<symbol id="fb" viewBox="0 0 24 24"><path d="M22 12a10 10 0 10-11.6 9.9v-7H7.9V12h2.5V9.8c0-2.5 1.5-3.9 3.8-3.9 1.1 0 2.2.2 2.2.2v2.5h-1.3c-1.2 0-1.6.8-1.6 1.6V12h2.8l-.4 2.9h-2.3v7A10 10 0 0022 12z"/></symbol></svg>';
 
   /* ---------- email sign-up ---------- */
   function bindSubForms(root) {
@@ -467,7 +480,7 @@
   }
 
   window.Site = {
-    boot: boot, load: load, esc: esc, rand: rand, num: num, dims: dims, waLink: waLink, phone: PHONE, instagram: IG,
+    boot: boot, load: load, esc: esc, rand: rand, num: num, dims: dims, waLink: waLink, phone: PHONE, instagram: IG, facebook: FB,
     cardHTML: cardHTML, christmas: christmas, icon: ICON, bindSubForms: bindSubForms, showcase: showcase,
     sizesFor: sizesFor, priceText: priceText, orderLink: orderLink, similarLink: similarLink
   };

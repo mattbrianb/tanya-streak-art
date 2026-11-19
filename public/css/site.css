@@ -36,6 +36,17 @@ nav.main a{text-decoration:none;min-height:40px;display:inline-flex;align-items:
 nav.main a:hover,nav.main a[aria-current="page"]{border-color:var(--rose)}
 nav.main a.wa{gap:7px;color:var(--rose-text)}
 nav.main a.wa svg{width:17px;height:17px;fill:currentColor}
+/* Instagram + Facebook: round icons in the header, labelled buttons in the footer */
+nav.main .social{display:inline-flex;gap:6px;margin-left:-14px}
+nav.main a.soc{width:40px;height:40px;justify-content:center;border-radius:50%;border:0;color:var(--rose-text);transition:background-color .2s,color .2s}
+nav.main a.soc svg{width:19px;height:19px;fill:currentColor}
+nav.main a.soc:hover{background:var(--blush);color:var(--rose-deep)}
+footer.site .follow{margin-top:26px}
+footer.site .follow p{font-size:14px;color:var(--ink-soft)}
+footer.site .follow-links{display:flex;justify-content:center;flex-wrap:wrap;gap:10px;margin-top:12px}
+footer.site a.soc{display:inline-flex;align-items:center;gap:9px;min-height:46px;padding:0 20px 0 16px;border:1px solid var(--blush-line);border-radius:999px;background:var(--white);color:var(--ink);text-decoration:none;font-size:14.5px;font-weight:500;transition:border-color .2s,color .2s,background-color .2s}
+footer.site a.soc svg{width:20px;height:20px;fill:var(--rose-text)}
+footer.site a.soc:hover{border-color:var(--rose-text);color:var(--rose-text);background:var(--blush)}
 
 /* buttons & links */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:48px;padding:0 28px;background:var(--rose-text);color:#fff;border:1px solid var(--rose-text);border-radius:3px;font:500 14.5px/1 'Figtree',sans-serif;letter-spacing:.04em;text-decoration:none;cursor:pointer;transition:background-color .2s,border-color .2s,color .2s,transform .2s var(--ease)}
@@ -273,6 +284,7 @@ a.frame:hover .room,a.frame:focus-visible .room{opacity:1}
   .logo img{width:230px}
   nav.main{gap:0 18px;padding:12px 8px 10px;font-size:14px}
   nav.main a.wa span{display:none}
+  nav.main .social{margin-left:-10px;gap:0}
   .hero{padding:32px 0 64px}
   .hero .wrap{grid-template-columns:minmax(0,1fr)}
   .hero figure{order:-1;margin:0 -20px}
