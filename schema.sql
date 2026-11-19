@@ -17,7 +17,9 @@ CREATE TABLE IF NOT EXISTS paintings (
   updated_at  TEXT    NOT NULL DEFAULT (datetime('now')),
   sold_at     TEXT,
   kind        TEXT    NOT NULL DEFAULT 'painting'   -- 'commission' = a finished commission (flip-through only)
-              CHECK (kind IN ('painting', 'commission'))
+              CHECK (kind IN ('painting', 'commission')),
+  christmas   INTEGER NOT NULL DEFAULT 0,    -- 1 = in the Christmas collection on the home page
+  reveal_at   TEXT                           -- UTC 'YYYY-MM-DDTHH:MM:SSZ': wrapped until then; NULL = shown now
 );
 
 CREATE TABLE IF NOT EXISTS images (
@@ -48,4 +50,9 @@ INSERT OR IGNORE INTO settings (key, value) VALUES
   ('commission_tiers', '[{"id":"small","label":"Small","longEdge":40,"price":1450},{"id":"medium","label":"Medium","longEdge":70,"price":2950},{"id":"large","label":"Large","longEdge":100,"price":5600}]'),
   ('popup_enabled', '1'),
   ('popup_heading', 'Be first to see new paintings'),
-  ('popup_text', 'Join Tanya''s list for new work, studio sales and when commissions open. A few emails a year, never spam.');
+  ('popup_text', 'Join Tanya''s list for new work, studio sales and when commissions open. A few emails a year, never spam.'),
+  ('christmas_enabled', '1'),
+  ('christmas_title', 'The Mantelpiece Miniatures'),
+  ('christmas_text', 'Little oils for Christmas, R450 to R600, each sold with a little display easel. Made for a mantel, a bookshelf or under the tree.'),
+  ('christmas_until', '2027-01-06'),
+  ('christmas_drop_at', '');

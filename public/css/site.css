@@ -414,3 +414,56 @@ nav.main .nav-menu a:hover,nav.main .nav-menu a[aria-current="page"]{background:
   .sc-t{font-size:14.5px;margin-top:12px}
   .sc-foot{margin-top:28px}
 }
+
+/* ---------- Christmas collection ("Unwrap") ----------
+   The minis arrive gift-wrapped at the top of the home page and open one by one.
+   Palette from 'Merry and Bright': plum paper, gold ribbon. */
+nav.main a.nav-xmas{gap:7px;color:#6B3A53;font-weight:500}
+nav.main a.nav-xmas .star{width:12px;height:12px;fill:#C9962F;transition:transform .5s var(--ease)}
+nav.main a.nav-xmas:hover .star{transform:rotate(90deg) scale(1.15)}
+.tag-new{display:inline-flex;align-items:center;gap:5px;font:600 11px/1 'Figtree',sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#FBEFE6;background:#6B3A53;border-radius:999px;padding:5px 9px 5px 7px;vertical-align:middle}
+.tag-new svg{width:9px;height:9px;fill:currentColor}
+.xg{position:relative;overflow:hidden;background:linear-gradient(var(--blush),#F7E6E0);padding:56px 0 64px;--k:14px;scroll-margin-top:12px}
+.xg-head{text-align:center}
+.xg-head h1{font-size:clamp(38px,4.4vw,62px);letter-spacing:-.018em}
+.xg-head p{margin:12px auto 0;max-width:56ch;color:var(--ink-soft)}
+.xg-grid{display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-end;gap:40px clamp(28px,4vw,56px);margin-top:40px}
+.xg-gift{text-align:center;width:calc(var(--k)*var(--w));max-width:100%}
+.xg-box{position:relative;display:block;height:calc(var(--k)*var(--h));aspect-ratio:var(--ar);max-width:100%;margin:0 auto;overflow:hidden;border-radius:2px;
+  box-shadow:0 2px 3px rgba(58,46,42,.18),10px 22px 34px -16px rgba(58,46,42,.5)}
+.xg-box img{width:100%;height:100%;object-fit:cover;display:block;transform:scale(1.06);transition:transform 1.4s var(--ease) .35s}
+.xg-gift.open .xg-box img{transform:none}
+.xg-under{position:absolute;inset:0;background:#E9D6CF}
+.xg-paper{position:absolute;top:-2%;bottom:-2%;width:51%;z-index:2;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='46' height='46'%3E%3Cpath d='M12 4l1.4 4.1 4.1 1.4-4.1 1.4L12 15l-1.4-4.1L6.5 9.5l4.1-1.4zM34 26l1 3 3 1-3 1-1 3-1-3-3-1 3-1z' fill='%23E4BC69' fill-opacity='.55'/%3E%3C/svg%3E"),
+    linear-gradient(115deg,rgba(255,255,255,.08),transparent 40%,rgba(0,0,0,.12)),#5A2F45;
+  transition:transform 1s cubic-bezier(.65,0,.35,1),opacity .4s ease .7s}
+.xg-paper.l{left:-1%;transform-origin:0 50%}
+.xg-paper.r{right:-1%;transform-origin:100% 50%}
+.xg-rib{position:absolute;z-index:3;background:linear-gradient(90deg,#B98E48,#EAD08F 45%,#C9A15A);transition:opacity .25s ease,transform .35s cubic-bezier(.65,0,.35,1)}
+.xg-rib.v{left:50%;top:0;bottom:0;width:12px;margin-left:-6px}
+.xg-rib.h{top:44%;left:0;right:0;height:12px;background:linear-gradient(#B98E48,#EAD08F 45%,#C9A15A)}
+.xg-bow{position:absolute;z-index:4;left:50%;top:44%;width:66px;height:40px;margin:-14px 0 0 -33px;transition:transform .55s cubic-bezier(.65,0,.35,1),opacity .45s ease}
+.xg-bow path{fill:#E0B864}.xg-bow path+path{fill:#C49A4E}
+.xg-gift.open .xg-rib.v{transform:scaleY(0)}.xg-gift.open .xg-rib.h{transform:scaleX(0)}.xg-gift.open .xg-rib{opacity:0}
+.xg-gift.open .xg-bow{transform:translateY(-60px) rotate(-18deg);opacity:0}
+.xg-gift.open .xg-paper.l{transform:translateX(-104%) rotate(-7deg)}
+.xg-gift.open .xg-paper.r{transform:translateX(104%) rotate(7deg)}
+.xg-gift.open .xg-paper{opacity:0;transition:transform 1s cubic-bezier(.65,0,.35,1) .18s,opacity .5s ease .9s}
+.xg-tagline{position:absolute;z-index:5;left:50%;bottom:16px;transform:translateX(-50%);width:max-content;max-width:calc(100% - 20px);text-align:center;text-wrap:balance;background:#FFFCF6;color:#4E2A3C;font:600 12.5px/1.25 'Figtree',sans-serif;padding:8px 12px;border-radius:3px;box-shadow:0 6px 12px -6px rgba(0,0,0,.4)}
+.xg-txt{margin-top:18px;transition:opacity .7s var(--ease) .9s,transform .7s var(--ease) .9s}
+.xg-gift:not(.open):not(.soon) .xg-txt{opacity:0;transform:translateY(8px)}
+.xg-txt h3{font-size:22px;display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center}
+.xg-txt h3 a{text-decoration:none}
+.xg-txt h3 a:hover{color:var(--rose-text)}
+.xg-txt .m{font-size:13.5px;color:var(--ink-soft);margin-top:4px}
+.xg-txt .p{font:400 21px/1 'Gloock',serif;color:var(--rose-text);margin-top:8px}
+.xg-txt .p.sold{color:var(--ink-soft)}
+.xg-txt .acts{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:12px}
+.xg-txt .btn{min-height:42px;padding:0 16px;font-size:14px}
+.xg-txt .btn svg{width:16px;height:16px}
+.xg-txt .btn.ghost svg{fill:none;stroke:currentColor;stroke-width:1.3}
+.xg-gift.soon .xg-txt h3{color:var(--ink-soft)}
+@media (max-width:760px){.xg{--k:10.5px;padding:40px 0 64px}.xg-grid{gap:34px 18px}.xg-txt h3{font-size:19px}.xg-txt .acts .btn.ghost{display:none}.xg-tagline{font-size:11.5px;padding:7px 9px}}
+@media (prefers-reduced-motion:reduce){.xg-paper,.xg-rib,.xg-bow,.xg-box img,.xg-txt{transition:opacity .4s ease!important}.xg-gift.open .xg-paper,.xg-gift.open .xg-bow{transform:none}}

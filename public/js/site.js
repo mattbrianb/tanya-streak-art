@@ -18,7 +18,7 @@
       id: p.slug, dbId: p.id, title: p.title, medium: p.medium, description: p.description,
       blurb: (p.description || '').split(/(?<=[.!?])\s/)[0],
       status: p.status, price: p.price, w: p.width_cm, h: p.height_cm, ratio: ratio,
-      images: p.images, url: '/painting/' + p.slug
+      images: p.images, url: '/painting/' + p.slug, christmas: !!p.christmas, created: p.created_at
     };
   }
   function dims(p) { return p.w && p.h ? num(p.w) + ' × ' + num(p.h) + ' cm' : ''; }
@@ -50,6 +50,7 @@
         commissions: (d.commissions || []).filter(function (p) { return p.images.length; }).map(function (p) {
           var c = shape(p); c.url = '/commissions/completed/#' + p.slug; return c;
         }),
+        christmas: d.christmas || { on: false },
         sizesFor: sizesFor, rand: rand, priceText: priceText, waLink: waLink,
         orderLink: orderLink, similarLink: similarLink, imgSrc: imgSrc
       };
@@ -110,6 +111,7 @@
       '<nav class="main" aria-label="Main">' + NAV.map(function (n) {
         return n[0] === '/commissions/' && drop ? comNavHTML(active) : navLink(n, active);
       }).join('') +
+      (LS.get('tsa_xmas') === '1' ? xmasNavHTML() : '') +
       '<a class="wa" href="' + waLink('Hi Tanya! I found your website and have a question.') + '" target="_blank" rel="noopener">' + ICON.wa + '<span>WhatsApp</span></a>' +
       '</nav></header>';
   }
@@ -233,6 +235,62 @@
     scan(document);
     new MutationObserver(function (ms) { ms.forEach(function (m) { m.addedNodes.forEach(function (n) { if (n.nodeType === 1) scan(n); }); }); })
       .observe(document.body, { childList: true, subtree: true });
+  }
+
+  /* ---------- Christmas collection ----------
+     While Tanya has the collection switched on, the header gets a "Christmas" link and the home page
+     shows the minis gift-wrapped at the top, unwrapping one by one as they come into view. */
+  var STAR = '<svg class="star" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 .8l1.55 4.6a1.6 1.6 0 0 0 1.05 1.05L15.2 8l-4.6 1.55a1.6 1.6 0 0 0-1.05 1.05L8 15.2l-1.55-4.6a1.6 1.6 0 0 0-1.05-1.05L.8 8l4.6-1.55A1.6 1.6 0 0 0 6.45 5.4z"/></svg>';
+  function xmasNavHTML() { return '<a class="nav-xmas" href="/#christmas">' + STAR + '<span>Christmas</span></a>'; }
+  function syncChristmas(T) {
+    var on = !!(T.christmas && T.christmas.on && (T.paintings.some(function (p) { return p.christmas; }) || T.christmas.wrapped));
+    LS.set('tsa_xmas', on ? '1' : '0');
+    var nav = document.querySelector('nav.main'), a = nav && nav.querySelector('.nav-xmas');
+    if (nav && on && !a) { var wa = nav.querySelector('a.wa'); wa ? wa.insertAdjacentHTML('beforebegin', xmasNavHTML()) : nav.insertAdjacentHTML('beforeend', xmasNavHTML()); }
+    else if (a && !on) a.remove();
+    T.christmasOn = on;
+  }
+  function dayLabel(iso) {
+    var d = new Date(iso), opts = { timeZone: 'Africa/Johannesburg' };
+    var day = d.toLocaleDateString('en-ZA', Object.assign({ weekday: 'long', day: 'numeric', month: 'long' }, opts));
+    var t = d.toLocaleTimeString('en-ZA', Object.assign({ hour: 'numeric', minute: '2-digit', hour12: true }, opts)).replace(':00', '').replace(/\s/g, '').toLowerCase();
+    return day.replace(',', '') + ', ' + t;
+  }
+  var BOW = '<svg class="xg-bow" viewBox="0 0 66 40" aria-hidden="true"><path d="M33 20C22 4 4 2 4 12s16 12 29 8zM33 20c11-16 29-18 29-8s-16 12-29 8z"/><path d="M28 15h10v10H28zM30 24l-9 15 6-2 6 2zM36 24l9 15-6-2-6 2z"/></svg>';
+  function wrapHTML() { return '<span class="xg-paper l"></span><span class="xg-paper r"></span><span class="xg-rib v"></span><span class="xg-rib h"></span>' + BOW; }
+  // el: the empty <section id="christmas">. Returns true when it was filled.
+  function christmas(el, T) {
+    var X = T.christmas || {};
+    var L = T.paintings.filter(function (p) { return p.christmas; });
+    if (!T.christmasOn || !el) return false;
+    var newest = L.slice().sort(function (a, b) { return a.created < b.created ? 1 : -1; }).slice(0, 2).map(function (p) { return p.id; });
+    var gifts = L.map(function (p) {
+      var sold = p.status === 'sold', z = sizesFor(p)[0], img = p.images[0];
+      var ar = img && img.width && img.height ? img.width / img.height : (p.ratio || .75), h = p.h || 21;
+      return '<article class="xg-gift" style="--h:' + h + ';--w:' + (h * ar).toFixed(2) + ';--ar:' + ar.toFixed(4) + '">' +
+        '<a class="xg-box" href="' + p.url + '" aria-label="' + esc(p.title) + '"><img src="' + esc(imgSrc(p, 'md')) + '" alt="' + esc(p.title) + ', ' + esc(p.medium.toLowerCase()) + ', by Tanya Streak" loading="lazy">' + wrapHTML() + '</a>' +
+        '<div class="xg-txt"><h3><a href="' + p.url + '">' + esc(p.title) + '</a>' + (newest.indexOf(p.id) > -1 && !sold ? ' <span class="tag-new">' + STAR + 'New</span>' : '') + '</h3>' +
+        '<p class="m">' + esc(p.medium) + (p.w ? ' · ' + esc(z.dims) : '') + '</p>' +
+        '<p class="p' + (sold ? ' sold' : '') + '">' + (sold ? 'Sold' : priceText(z)) + '</p>' +
+        '<div class="acts">' + (sold ? '' : '<a class="btn" href="' + orderLink(p, z) + '" target="_blank" rel="noopener">' + ICON.wa + 'Order</a>') +
+        '<button type="button" class="btn ghost" data-wallroom="' + p.id + '">' + ICON.wall + 'On a wall</button></div></div></article>';
+    });
+    var waiting = Math.min(X.wrapped || 0, 3);
+    for (var i = 0; i < waiting; i++) {
+      gifts.push('<article class="xg-gift soon" style="--h:20;--w:15;--ar:.75"><div class="xg-box" role="img" aria-label="A wrapped painting, opening ' + esc(dayLabel(X.opens)) + '"><span class="xg-under"></span>' + wrapHTML() +
+        '<span class="xg-tagline">Opens ' + esc(dayLabel(X.opens)) + '</span></div>' +
+        (i === 0 ? '<div class="xg-txt"><h3>Still under wraps</h3><p class="m">' + (waiting > 1 ? waiting + ' more minis open' : 'The next mini opens') + ' at the next drop</p></div>' : '') + '</article>');
+    }
+    el.innerHTML = '<div class="wrap xg-head"><h1 id="xg-h">' + esc(X.title) + '</h1>' + (X.text ? '<p>' + esc(X.text) + '</p>' : '') + '</div>' +
+      '<div class="wrap xg-grid">' + gifts.join('') + '</div>';
+    el.setAttribute('aria-labelledby', 'xg-h');
+    el.hidden = false;
+    var opened = [].slice.call(el.querySelectorAll('.xg-gift:not(.soon)'));
+    var still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    function open() { opened.forEach(function (g, i) { setTimeout(function () { g.classList.add('open'); }, still ? 0 : 350 + i * 480); }); }
+    if (!('IntersectionObserver' in window)) open();
+    else { var io = new IntersectionObserver(function (es) { if (es[0].isIntersecting) { open(); io.disconnect(); } }, { threshold: .3 }); io.observe(el.querySelector('.xg-grid')); }
+    return true;
   }
 
   /* ---------- commissions menu ---------- */
@@ -401,6 +459,7 @@
     document.querySelectorAll('[data-wa]').forEach(function (a) { a.href = waLink(a.dataset.wa); a.target = '_blank'; a.rel = 'noopener'; });
     return load().then(function (T) {
       syncCommissions(T, active);
+      syncChristmas(T);
       Wallroom.init({ base: '', wallName: 'Blush white', frame: 'timber', frameName: 'Timber & mat' });
       watchRooms(T);
       return T;
@@ -409,7 +468,7 @@
 
   window.Site = {
     boot: boot, load: load, esc: esc, rand: rand, num: num, dims: dims, waLink: waLink, phone: PHONE, instagram: IG,
-    cardHTML: cardHTML, icon: ICON, bindSubForms: bindSubForms, showcase: showcase,
+    cardHTML: cardHTML, christmas: christmas, icon: ICON, bindSubForms: bindSubForms, showcase: showcase,
     sizesFor: sizesFor, priceText: priceText, orderLink: orderLink, similarLink: similarLink
   };
 })();

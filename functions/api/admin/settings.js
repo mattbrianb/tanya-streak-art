@@ -1,11 +1,17 @@
-// GET /api/admin/settings, PUT /api/admin/settings { commission_tiers?, popup_enabled?, popup_heading?, popup_text? }
-import { json, error, readJson, setSetting, cleanText } from '../../../lib/util.js';
+// GET /api/admin/settings, PUT /api/admin/settings { commission_tiers?, popup_enabled?, popup_heading?, popup_text?,
+//   christmas_enabled?, christmas_title?, christmas_text?, christmas_until? (YYYY-MM-DD), christmas_drop? (Durban 'YYYY-MM-DDTHH:MM' or '') }
+import { json, error, readJson, setSetting, cleanText, NOW_SQL } from '../../../lib/util.js';
 
 export async function onRequestGet({ env }) {
   const { results } = await env.DB.prepare("SELECT key, value FROM settings WHERE key != 'password_hash'").all();
   const out = {};
   for (const r of results) out[r.key] = r.key === 'commission_tiers' ? JSON.parse(r.value) : r.value;
   out.popup_enabled = out.popup_enabled !== '0';
+  out.christmas_enabled = out.christmas_enabled === '1';
+  // the drop time is stored in UTC; the portal shows and edits it in Durban time (SAST, UTC+2)
+  out.christmas_drop = out.christmas_drop_at ? new Date(Date.parse(out.christmas_drop_at) + 2 * 3600e3).toISOString().slice(0, 16) : '';
+  const c = await env.DB.prepare("SELECT COUNT(*) AS n FROM paintings WHERE christmas = 1 AND kind = 'painting' AND status != 'hidden'").first();
+  out.christmas_count = c ? c.n : 0;
   return json(out);
 }
 
@@ -33,5 +39,30 @@ export async function onRequestPut({ request, env }) {
     await setSetting(env.DB, 'popup_heading', h);
   }
   if ('popup_text' in b) await setSetting(env.DB, 'popup_text', cleanText(b.popup_text, 300).trim());
+
+  // Christmas collection
+  if ('christmas_enabled' in b) await setSetting(env.DB, 'christmas_enabled', b.christmas_enabled ? '1' : '0');
+  if ('christmas_title' in b) {
+    const t = cleanText(b.christmas_title, 80).trim();
+    if (!t) return error(400, 'The Christmas collection needs a name.');
+    await setSetting(env.DB, 'christmas_title', t);
+  }
+  if ('christmas_text' in b) await setSetting(env.DB, 'christmas_text', cleanText(b.christmas_text, 300).trim());
+  if ('christmas_until' in b) {
+    const d = String(b.christmas_until || '');
+    if (d && !/^\d{4}-\d{2}-\d{2}$/.test(d)) return error(400, 'Choose the date to take the Christmas collection down.');
+    await setSetting(env.DB, 'christmas_until', d);
+  }
+  if ('christmas_drop' in b) {
+    const d = String(b.christmas_drop || '');
+    let at = '';
+    if (d) {
+      if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(d)) return error(400, 'Choose a date and a time for the next drop.');
+      at = new Date(Date.parse(d + ':00Z') - 2 * 3600e3).toISOString().slice(0, 19) + 'Z';
+    }
+    await setSetting(env.DB, 'christmas_drop_at', at);
+    // paintings still waiting for a drop move with it (or open now, if the drop is cleared)
+    await env.DB.prepare(`UPDATE paintings SET reveal_at = ? WHERE reveal_at > ${NOW_SQL}`).bind(at || null).run();
+  }
   return onRequestGet({ env });
 }

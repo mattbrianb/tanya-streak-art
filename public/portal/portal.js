@@ -45,6 +45,13 @@
   // ---------- Icons ----------
 
   const svg = (d, extra = '') => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" ${extra}>${d}</svg>`;
+  const XSTAR = '<svg class="xm-star" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 .8l1.55 4.6a1.6 1.6 0 0 0 1.05 1.05L15.2 8l-4.6 1.55a1.6 1.6 0 0 0-1.05 1.05L8 15.2l-1.55-4.6a1.6 1.6 0 0 0-1.05-1.05L.8 8l4.6-1.55A1.6 1.6 0 0 0 6.45 5.4z"/></svg>';
+  // 'YYYY-MM-DDTHH:MM' in Durban time → "Friday 20 November, 7pm"
+  function dropLabel(local) {
+    const [d, t] = local.split('T'), [y, mo, da] = d.split('-').map(Number), [h, mi] = t.split(':').map(Number);
+    const day = new Date(Date.UTC(y, mo - 1, da)).toLocaleDateString('en-ZA', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' }).replace(',', '');
+    return `${day}, ${(h % 12) || 12}${mi ? ':' + String(mi).padStart(2, '0') : ''}${h < 12 ? 'am' : 'pm'}`;
+  }
   const I = {
     back: svg('<path d="m15 18-6-6 6-6"/>'),
     chev: svg('<path d="m9 18 6-6-6-6"/>', 'class="chev"'),
@@ -558,7 +565,7 @@
         <a class="pcard-main" href="${L.base}/${p.id}">
           <span class="pcard-img">${cover ? `<img src="${esc(cover.md)}" alt="" loading="lazy" decoding="async">` : 'No photo yet'}</span>
           <span class="pcard-body">
-            <span class="pill ${s.cls}">${s.label}</span>
+            <span class="pills"><span class="pill ${s.cls}">${s.label}</span>${p.christmas ? `<span class="pill pill-xmas">${p.reveal_at && p.reveal_at > new Date().toISOString() ? 'Christmas · wrapped' : 'Christmas'}</span>` : ''}</span>
             <span class="pcard-title">${esc(p.title)}</span>
             ${meta ? `<span class="pcard-meta">${esc(meta)}</span>` : ''}
             ${isCom ? '' : `<span class="pcard-price">${esc(money(p.price))}</span>`}
@@ -671,6 +678,7 @@
 
     const v = p || { title: '', medium: 'Oil on canvas', description: '', width_cm: null, height_cm: null, price: null, status: 'available' };
     const knownMedium = !v.medium || MEDIUMS.includes(v.medium);
+    const xmWaiting = !!(v.reveal_at && v.reveal_at > new Date().toISOString());
     const title = isNew ? E.newTitle : E.editTitle;
 
     mount(`<h1 tabindex="-1">${title}</h1>
@@ -734,6 +742,25 @@
           </div>
         </section>
 
+        ${isCom ? '' : `<section class="card xm-card${v.christmas ? ' xm-on' : ''}" id="xm" aria-labelledby="h-xm">
+          <h2 id="h-xm">${XSTAR}Christmas collection</h2>
+          <div class="switch-row">
+            <label for="f-xmas"><strong>Part of the Christmas collection</strong><span class="switch-sub" id="f-xmas-sub">Shows gift-wrapped at the top of your home page, in its own Christmas section.</span></label>
+            <input type="checkbox" role="switch" id="f-xmas" class="switch"${v.christmas ? ' checked' : ''} aria-describedby="f-xmas-sub">
+          </div>
+          <div class="xm-peek"><div>
+            <fieldset class="xm-when">
+              <legend class="label">When should it appear?</legend>
+              <div class="choices">
+                <label class="choice"><input type="radio" name="reveal" value="now"${xmWaiting ? '' : ' checked'}><span class="choice-dot" aria-hidden="true"></span>
+                  <span><strong>Straight away</strong><span class="choice-sub">As soon as you save</span></span></label>
+                <label class="choice"><input type="radio" name="reveal" value="drop"${xmWaiting ? ' checked' : ''}><span class="choice-dot" aria-hidden="true"></span>
+                  <span><strong>At the next drop</strong><span class="choice-sub" id="xm-drop">Set the date and time of the next drop in Settings first.</span></span></label>
+              </div>
+            </fieldset>
+          </div></div>
+        </section>`}
+
         <section class="card">
           <fieldset>
             <legend class="legend-h2">${E.legend}</legend>
@@ -778,7 +805,8 @@
         price: f.price ? f.price.value : '',
         description: f.desc.value.trim(),
         status: st ? st.value : 'available',
-        kind
+        kind,
+        ...(isCom ? {} : { christmas: $('#f-xmas').checked, reveal: ($('input[name="reveal"]:checked') || {}).value || 'now' })
       };
     }
     let initial = JSON.stringify(readFields());
@@ -790,6 +818,18 @@
       if (JSON.stringify(readFields()) !== initial || unsent()) return 'You have changes that are not saved yet.';
       return '';
     };
+
+    if (!isCom) {
+      const xm = $('#xm'), xs = $('#f-xmas');
+      xs.addEventListener('change', () => xm.classList.toggle('xm-on', xs.checked));
+      // say when the next drop is, so "At the next drop" means something
+      api('GET', '/api/admin/settings').then(st => {
+        const el = $('#xm-drop'); if (!el) return;
+        const drop = $('input[name="reveal"][value="drop"]');
+        if (st.christmas_drop) el.textContent = `${dropLabel(st.christmas_drop)}. Until then it stays wrapped on your home page.`;
+        else if (!drop.checked) drop.disabled = true;
+      }).catch(() => {});
+    }
 
     f.medium.addEventListener('change', () => {
       const other = f.medium.value === '__other';
@@ -1317,6 +1357,40 @@
         </form>
       </section>
 
+      <section class="card xm-card" aria-labelledby="h-xs">
+        <h2 id="h-xs">${XSTAR}Christmas collection</h2>
+        <p class="section-hint">Paintings you mark as “Christmas collection” open gift-wrapped at the top of your home page while this is on.</p>
+        <form id="f-xs" novalidate>
+          <div class="switch-row">
+            <label for="x-on"><strong>Show the Christmas collection</strong><span class="switch-sub" id="x-on-state"></span></label>
+            <input type="checkbox" role="switch" id="x-on" class="switch"${s.christmas_enabled ? ' checked' : ''}>
+          </div>
+          <div class="field">
+            <label for="x-title">Name of the collection</label>
+            <input type="text" id="x-title" maxlength="80" value="${esc(s.christmas_title || '')}" placeholder="For example: The Mantelpiece Miniatures">
+          </div>
+          <div class="field">
+            <label for="x-text">A line about it</label>
+            <textarea id="x-text" maxlength="300" rows="3">${esc(s.christmas_text || '')}</textarea>
+          </div>
+          <fieldset class="field">
+            <legend class="label">Next drop <span class="opt">(optional)</span></legend>
+            <div class="date-row">
+              <div><label for="x-drop-d" class="visually-hidden">Date of the next drop</label><input type="date" id="x-drop-d" value="${esc((s.christmas_drop || '').slice(0, 10))}"></div>
+              <div><label for="x-drop-t" class="visually-hidden">Time of the next drop</label><input type="time" id="x-drop-t" value="${esc((s.christmas_drop || '').slice(11, 16) || '19:00')}"></div>
+            </div>
+            <p class="hint">Paintings set to “At the next drop” stay wrapped until then and open by themselves. Leave the date empty for no drop.</p>
+          </fieldset>
+          <div class="field">
+            <label for="x-until">Take it down after</label>
+            <input type="date" id="x-until" value="${esc(s.christmas_until || '')}" aria-describedby="x-until-h">
+            <p class="hint" id="x-until-h">After this day your home page goes back to normal by itself. The paintings stay in your shop.</p>
+          </div>
+          <p class="form-msg" id="m-xs" role="status" aria-live="polite"></p>
+          <button type="submit" class="btn btn-primary btn-block">Save Christmas collection</button>
+        </form>
+      </section>
+
       <section class="card" aria-labelledby="h-pw">
         <h2 id="h-pw">Change password</h2>
         <p class="section-hint">You'll use the new password next time you sign in. Other phones or computers will be signed out.</p>
@@ -1338,10 +1412,10 @@
       </section>`, 'Settings');
 
     const snap = form => JSON.stringify($$('input, textarea, select', form).map(el => (el.type === 'checkbox' ? el.checked : el.value)));
-    const forms = { comm: $('#f-comm'), pop: $('#f-pop'), pw: $('#f-pw') };
-    const base = { comm: snap(forms.comm), pop: snap(forms.pop) };
+    const forms = { comm: $('#f-comm'), pop: $('#f-pop'), xs: $('#f-xs'), pw: $('#f-pw') };
+    const base = { comm: snap(forms.comm), pop: snap(forms.pop), xs: snap(forms.xs) };
     guard = () => {
-      if (snap(forms.comm) !== base.comm || snap(forms.pop) !== base.pop || $('#pw-cur').value || $('#pw-new').value) {
+      if (snap(forms.comm) !== base.comm || snap(forms.pop) !== base.pop || snap(forms.xs) !== base.xs || $('#pw-cur').value || $('#pw-new').value) {
         return 'You have changes in Settings that are not saved yet.';
       }
       return '';
@@ -1411,6 +1485,37 @@
           base.pop = snap(forms.pop);
           msg('#m-pop', 'ok', r.popup_enabled ? 'Saved. The sign-up box is on your website.' : 'Saved. The sign-up box is switched off.');
         } catch (ex) { if (!quiet(ex)) msg('#m-pop', 'err', ex.message); }
+      });
+    });
+
+    // Christmas collection
+    const xsw = $('#x-on');
+    let xCount = s.christmas_count || 0;
+    const xText = () => { $('#x-on-state').textContent = xsw.checked ? `On · ${xCount === 1 ? '1 painting' : xCount + ' paintings'} in it` : 'Off: your home page looks as usual'; };
+    xText();
+    xsw.addEventListener('change', xText);
+    forms.xs.addEventListener('submit', e => {
+      e.preventDefault();
+      msg('#m-xs', '', '');
+      const title = $('#x-title');
+      title.removeAttribute('aria-invalid');
+      if (!title.value.trim()) { title.setAttribute('aria-invalid', 'true'); msg('#m-xs', 'err', 'The collection needs a name.'); title.focus(); return; }
+      const d = $('#x-drop-d').value, t = $('#x-drop-t').value || '19:00';
+      saving(forms.xs, async () => {
+        try {
+          const r = await api('PUT', '/api/admin/settings', {
+            christmas_enabled: xsw.checked, christmas_title: title.value.trim(), christmas_text: $('#x-text').value.trim(),
+            christmas_until: $('#x-until').value, christmas_drop: d ? `${d}T${t}` : ''
+          });
+          xsw.checked = !!r.christmas_enabled; xCount = r.christmas_count || 0;
+          title.value = r.christmas_title || ''; $('#x-text').value = r.christmas_text || '';
+          $('#x-drop-d').value = (r.christmas_drop || '').slice(0, 10); $('#x-drop-t').value = (r.christmas_drop || '').slice(11, 16) || '19:00';
+          $('#x-until').value = r.christmas_until || '';
+          xText();
+          base.xs = snap(forms.xs);
+          paintingsCache = null;
+          msg('#m-xs', 'ok', r.christmas_enabled ? 'Saved. The Christmas collection is on your home page.' : 'Saved. The Christmas collection is switched off.');
+        } catch (ex) { if (!quiet(ex)) msg('#m-xs', 'err', ex.message); }
       });
     });
 

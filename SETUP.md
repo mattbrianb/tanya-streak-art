@@ -112,7 +112,7 @@ New columns come as numbered files in `migrations/`. Run each once on the live d
 ```bash
 npx wrangler d1 execute tanya-art --remote --file=migrations/0001_commissions.sql
 ```
-If `--file` fails with "Authentication error [code: 10000]" (the OAuth login can be refused on D1's import route), run the statement with `--command "…"` instead, which uses the normal query route. 0001 is already applied on the live database (2026-11-08).
+If `--file` fails with "Authentication error [code: 10000]" (the OAuth login can be refused on D1's import route), run the statement with `--command "…"` instead, which uses the normal query route. 0001 is already applied on the live database (2026-11-08); 0002 (Christmas collection) on 2026-11-19.
 
 ## Domain (the one cost)
 
