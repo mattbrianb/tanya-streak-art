@@ -294,16 +294,100 @@
         '<span class="xg-tagline">Opens ' + esc(dayLabel(X.opens)) + '</span></div>' +
         (i === 0 ? '<div class="xg-txt"><h3>Still under wraps</h3><p class="m">' + (waiting > 1 ? waiting + ' more minis open' : 'The next mini opens') + ' at the next drop</p></div>' : '') + '</article>');
     }
-    el.innerHTML = '<div class="wrap xg-head"><h1 id="xg-h">' + esc(X.title) + '</h1>' + (X.text ? '<p>' + esc(X.text) + '</p>' : '') + '</div>' +
+    el.innerHTML = '<canvas class="xg-fx" aria-hidden="true"></canvas><svg class="xg-string" aria-hidden="true"></svg>' +
+      '<div class="wrap xg-head"><h1 id="xg-h">' + esc(X.title) + '</h1>' + (X.text ? '<p>' + esc(X.text) + '</p>' : '') + '</div>' +
       '<div class="wrap xg-grid">' + gifts.join('') + '</div>';
     el.setAttribute('aria-labelledby', 'xg-h');
     el.hidden = false;
     var opened = [].slice.call(el.querySelectorAll('.xg-gift:not(.soon)'));
     var still = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    function open() { opened.forEach(function (g, i) { setTimeout(function () { g.classList.add('open'); }, still ? 0 : 350 + i * 480); }); }
+    stringLights(el.querySelector('.xg-string'));
+    var fx = sparkle(el, el.querySelector('.xg-fx'), still);
+    function open() {
+      opened.forEach(function (g, i) {
+        setTimeout(function () { g.classList.add('open'); fx.burst(g.querySelector('.xg-box')); }, still ? 0 : 350 + i * 480);
+      });
+    }
     if (!('IntersectionObserver' in window)) open();
     else { var io = new IntersectionObserver(function (es) { if (es[0].isIntersecting) { open(); io.disconnect(); } }, { threshold: .3 }); io.observe(el.querySelector('.xg-grid')); }
     return true;
+  }
+
+  /* Fairy lights draped across the top of the Christmas section, in swags, each bulb twinkling on its own. */
+  function stringLights(svg) {
+    var W = 1440, H = 120, swags = 4, d = 'M-20 14', i, out = '';
+    for (i = 0; i < swags; i++) { var a = -20 + i * (W + 40) / swags, b = a + (W + 40) / swags; d += ' Q' + (a + b) / 2 + ' ' + (70 + (i % 2) * 12) + ' ' + b + ' 14'; }
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H); svg.setAttribute('preserveAspectRatio', 'xMidYMin slice');
+    svg.innerHTML = '<defs><radialGradient id="xgb"><stop offset="0" stop-color="#FFF6DD"/><stop offset=".3" stop-color="#F7CF84"/><stop offset=".6" stop-color="rgba(246,190,110,.3)"/><stop offset="1" stop-color="rgba(246,190,110,0)"/></radialGradient></defs><path class="wire" d="' + d + '"/>';
+    var path = svg.querySelector('path'), len = path.getTotalLength(), n = 38;
+    for (i = 1; i < n; i++) {
+      var q = path.getPointAtLength(len * i / n);
+      out += '<g><rect class="cap" x="' + (q.x - 2.5).toFixed(1) + '" y="' + (q.y - 1).toFixed(1) + '" width="5" height="6" rx="1"/>' +
+        '<ellipse class="glow" cx="' + q.x.toFixed(1) + '" cy="' + (q.y + 10).toFixed(1) + '" rx="12" ry="14" fill="url(#xgb)" style="--d:' + (.2 + i * .035).toFixed(2) + 's;--d2:' + (1.6 + Math.random() * 2.4).toFixed(2) + 's;--tw:' + (2 + Math.random() * 2.6).toFixed(2) + 's"/></g>';
+    }
+    svg.insertAdjacentHTML('beforeend', out);
+    requestAnimationFrame(function () { svg.classList.add('lit'); });
+  }
+
+  /* Soft golden lights drifting up behind the presents, and a burst of gold sparkles when one opens.
+     One canvas for both; it sleeps when the section is off screen or the tab is hidden. Reduced motion:
+     the lights are drawn once and stay still, and there is no burst. */
+  function sparkle(section, cv, still) {
+    var ctx = cv.getContext('2d'), dpr = Math.min(window.devicePixelRatio || 1, 2), W = 0, H = 0, raf = 0, seen = true;
+    var dots = [], bits = [], small = innerWidth < 760;
+    for (var i = 0; i < (small ? 12 : 22); i++) dots.push({ x: Math.random(), y: Math.random(), r: 8 + Math.pow(Math.random(), 2) * (small ? 24 : 38), a: .16 + Math.random() * .26, s: .4 + Math.random() * .8, p: Math.random() * 6.3, v: .004 + Math.random() * .01 });
+    function size() { var b = cv.getBoundingClientRect(); W = b.width; H = b.height; cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); if (still) draw(0, 0); }
+    function star(x, y, r, rot) {
+      ctx.save(); ctx.translate(x, y); ctx.rotate(rot); ctx.beginPath();
+      for (var k = 0; k < 8; k++) { var rr = k % 2 ? r * .38 : r, t = k * Math.PI / 4; ctx.lineTo(Math.cos(t) * rr, Math.sin(t) * rr); }
+      ctx.closePath(); ctx.fill(); ctx.restore();
+    }
+    var last = 0;
+    function draw(now, dt) {
+      ctx.clearRect(0, 0, W, H);
+      ctx.globalCompositeOperation = 'source-over';
+      for (var i = 0; i < dots.length; i++) {
+        var d = dots[i];
+        if (!still) { d.y -= d.v * dt / 1000; if (d.y < -.1) { d.y = 1.08; d.x = Math.random(); } }
+        var tw = still ? 1 : .7 + .3 * Math.sin(now / 1000 * d.s + d.p), x = d.x * W, y = d.y * H, a = d.a * tw;
+        var g = ctx.createRadialGradient(x, y, 0, x, y, d.r);
+        g.addColorStop(0, 'rgba(255,236,190,' + a + ')'); g.addColorStop(.45, 'rgba(244,201,120,' + a * .55 + ')'); g.addColorStop(1, 'rgba(244,190,110,0)');
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, d.r, 0, 6.283); ctx.fill();
+      }
+      for (var j = bits.length - 1; j >= 0; j--) {
+        var b = bits[j]; b.t += dt / 1000;
+        if (b.t > b.life) { bits.splice(j, 1); continue; }
+        b.vy += 260 * dt / 1000; b.vx *= .98; b.x += b.vx * dt / 1000; b.y += b.vy * dt / 1000; b.rot += b.spin * dt / 1000;
+        ctx.globalAlpha = Math.max(0, 1 - Math.pow(b.t / b.life, 2)); ctx.fillStyle = b.c; ctx.shadowColor = 'rgba(255,214,140,.9)'; ctx.shadowBlur = 10;
+        if (b.star) star(b.x, b.y, b.r, b.rot); else { ctx.beginPath(); ctx.arc(b.x, b.y, b.r * .5, 0, 6.283); ctx.fill(); }
+      }
+      ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+    }
+    function loop(now) {
+      var dt = last ? Math.min(50, now - last) : 16; last = now;
+      draw(now, dt);
+      raf = seen && !document.hidden ? requestAnimationFrame(loop) : (last = 0, 0);
+    }
+    function wake() { if (!still && !raf && seen && !document.hidden) raf = requestAnimationFrame(loop); }
+    size();
+    if ('ResizeObserver' in window) new ResizeObserver(size).observe(cv);
+    if ('IntersectionObserver' in window) new IntersectionObserver(function (e) { seen = e[0].isIntersecting; wake(); }).observe(section);
+    document.addEventListener('visibilitychange', wake);
+    wake();
+    var COLORS = ['#E8C06A', '#F4D58C', '#C9962F', '#FFF1CF', '#B9716A'];
+    return {
+      burst: function (box) {
+        if (still || !box) return;
+        var a = box.getBoundingClientRect(), c = cv.getBoundingClientRect();
+        var x = a.left - c.left + a.width / 2, y = a.top - c.top + a.height * .44;
+        for (var k = 0; k < 44; k++) {
+          var ang = -Math.PI / 2 + (Math.random() - .5) * Math.PI * 1.6, sp = 180 + Math.random() * 320;
+          bits.push({ x: x, y: y, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp, r: 5 + Math.random() * 7, t: 0, life: 1.3 + Math.random() * .9,
+            c: COLORS[k % COLORS.length], star: k % 3 !== 0, rot: Math.random() * 3, spin: (Math.random() - .5) * 8 });
+        }
+        wake();
+      }
+    };
   }
 
   /* ---------- commissions menu ---------- */

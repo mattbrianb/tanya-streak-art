@@ -35,6 +35,11 @@
       <figure id="hero-fig"></figure>
     </div>
   </section>
+  <script>
+    // Keep the usual banner hidden until we know whether the Christmas collection replaces it, so it never flashes.
+    // (Shown straight away only when the last visit found Christmas switched off. The script below always settles it.)
+    try { if (localStorage.getItem('tsa_xmas') !== '0') document.querySelector('.hero').hidden = true; } catch (e) {}
+  </script>
 
   <div class="band">
     <section class="sec wrap" aria-labelledby="orig-h">
@@ -105,6 +110,8 @@ Site.boot('/').then(function (T) {
   if (Site.christmas(document.getElementById('christmas'), T)) {
     document.querySelector('.hero').hidden = true;
     P = P.filter(function (p) { return !p.christmas; });
+  } else {
+    document.querySelector('.hero').hidden = false;
   }
   var hero = P.filter(function (p) { return p.status === 'available'; })[0] || P[0];
   if (hero) {
@@ -128,6 +135,7 @@ Site.boot('/').then(function (T) {
   }).join('');
   Site.showcase(document.getElementById('showcase'), T.commissions);
 }).catch(function () {
+  document.querySelector('.hero').hidden = false;
   document.getElementById('grid').innerHTML = '<p class="loading">The paintings didn’t load. Please refresh the page.</p>';
 });
 </script>
