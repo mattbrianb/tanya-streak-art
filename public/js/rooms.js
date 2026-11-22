@@ -18,7 +18,13 @@
     { id: 'fluted-dresser', name: 'Above a fluted dresser',    a: 1.7778, x: .67,  y: .466, align: 'bottom', s: .0030,  maxW: 150, maxH: 85,  temp: 1,  sx: 1,   tint: 'rgba(235,215,185,.10)', ideal: 80, bright: .98 },
     { id: 'cream-mantel', name: 'Cream mantelpiece',      a: 1.7563, x: .67,  y: .79,  align: 'bottom', s: .0055,  maxW: 72,  maxH: 70,  temp: 1,  sx: 1,   tint: 'rgba(235,220,195,.10)', ideal: 45, bright: .98 },
     { id: 'sunlit-shelf', name: 'Sunlit shelf',      a: 1.3093, x: .77,  y: .40,  align: 'center', s: .009,   maxW: 34,  maxH: 45,  temp: 1,  sx: 1,   tint: 'rgba(240,180,110,.18)', ideal: 25, bright: .95 },
-    { id: 'white-shelf', name: 'White shelf',       a: 1.4995, x: .48,  y: .55,  align: 'bottom', s: .0043,  maxW: 150, maxH: 80,  temp: -1, sx: 1,   tint: 'rgba(235,235,235,.04)', ideal: 55, bright: 1 }
+    { id: 'white-shelf', name: 'White shelf',       a: 1.4995, x: .48,  y: .55,  align: 'bottom', s: .0043,  maxW: 150, maxH: 80,  temp: -1, sx: 1,   tint: 'rgba(235,235,235,.04)', ideal: 55, bright: 1 },
+    { id: 'sofa-wall',         name: 'Above a pale sofa',          a: 1.7778, x: .353, y: .47,  align: 'bottom', s: .00375, maxW: 160, maxH: 60, minL: 25, temp: 0,  sx: 0,   tint: 'rgba(240,235,225,.04)', ideal: 90, bright: 1 },
+    { id: 'oak-dresser',       name: 'Over a pale oak dresser',    a: 1.7778, x: .206, y: .489, align: 'bottom', s: .00298, maxW: 90,  maxH: 85,  temp: 0,  sx: 0,   tint: 'rgba(240,235,225,.04)', ideal: 55, bright: 1 },
+    { id: 'console-desk',      name: 'Over a console desk',        a: 1.7778, x: .273, y: .333, align: 'bottom', s: .00378, maxW: 100, maxH: 48,  temp: 0,  sx: 0,   tint: 'rgba(240,235,225,.04)', ideal: 45, bright: 1 },
+    { id: 'linen-bed',         name: 'Above a low linen bed',      a: 1.4995, x: .52,  y: .2025, align: 'bottom', s: .0026, maxW: 110, maxH: 48, minL: 30, temp: 1,  sx: 0,   tint: 'rgba(235,220,195,.06)', ideal: 70, bright: 1 },
+    { id: 'sunlit-nightstand', name: 'Over a sunlit nightstand',   a: 1.4967, x: .29,  y: .318, align: 'bottom', s: .00456, maxW: 70,  maxH: 38,  temp: 1,  sx: 1,   tint: 'rgba(240,200,150,.10)', ideal: 35, bright: .97 },
+    { id: 'twin-beds',         name: 'Between lamps over twin beds', a: 1.4995, x: .494, y: .272, align: 'bottom', s: .00215, maxW: 150, maxH: 80, minL: 25, temp: 0, sx: 0, tint: 'rgba(240,235,225,.04)', ideal: 80, bright: 1 }
   ];
   var FRAME_CM = 2.5;             // thin timber float frame around the canvas
 
@@ -56,6 +62,7 @@
     if (own && fits(own, z)) return own;
     var long = Math.max(z.w, z.h), aspect = z.w / z.h, cands = [];
     ROOMS.forEach(function (r) {
+      if (r.auto === false) return;                              // Tanya's photo, kept for paintings she picks it for
       if (!fits(r, z) || (r.minL && long < r.minL)) return;
       var ratio = long / r.ideal;
       if (ratio < .36) return;                                   // would look lost on that wall
@@ -80,7 +87,7 @@
     var z = sizeOf(p), fw = (z.w + 2 * FRAME_CM) * r.s, fh = (z.h + 2 * FRAME_CM) * r.s * r.a;   // fractions of photo w / h
     var left = r.x - fw / 2, top = r.align === 'bottom' ? r.y - fh : r.y - fh / 2;
     return '<span class="room" style="--a:' + r.a + ';--px:' + r.x + ';--sx:' + r.sx + '" aria-hidden="true">' +
-      '<span class="room-in"><img class="room-bg" src="/static/rooms/' + r.id + '.jpg" alt="" loading="lazy" decoding="async">' +
+      '<span class="room-in"><img class="room-bg" src="' + (r.src || '/static/rooms/' + r.id + '.jpg') + '" alt="" loading="lazy" decoding="async">' +
       '<span class="room-art" style="left:' + (left * 100).toFixed(2) + '%;top:' + (top * 100).toFixed(2) + '%;width:' + (fw * 100).toFixed(2) + '%;height:' + (fh * 100).toFixed(2) + '%;padding:' + (FRAME_CM * r.s * 100).toFixed(3) + '%">' +
       '<img src="' + src + '" alt="" style="filter:brightness(' + r.bright + ')"><span class="room-tint" style="background:' + r.tint + '"></span></span>' +
       '</span></span>';
@@ -105,5 +112,9 @@
     return '<div class="room-scene" style="aspect-ratio:' + r.a + '">' + html(p, r, img.currentSrc || img.src).replace('class="room"', 'class="room full"') + '</div>';
   }
 
-  window.Rooms = { attach: attach, scene: scene, list: ROOMS, fits: fits };
+  // Tanya's own room photos (from the API) join the stock ones.
+  function add(list) {
+    (list || []).forEach(function (r) { if (!ROOMS.some(function (x) { return x.id === r.id; })) ROOMS.push(r); });
+  }
+  window.Rooms = { attach: attach, scene: scene, list: ROOMS, fits: fits, add: add };
 })();

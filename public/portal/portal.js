@@ -46,7 +46,11 @@
 
   const svg = (d, extra = '') => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" ${extra}>${d}</svg>`;
   // Choices for "How it's shown". Rooms come from /js/rooms.js (loaded before this script).
-  const ROOM_LIST = (window.Rooms && window.Rooms.list) || [];
+  const STOCK_ROOMS = ((window.Rooms && window.Rooms.list) || []).filter(x => !x.custom);
+  let myRooms = null;                         // Tanya's own room photos, loaded on demand
+  const loadMyRooms = () => api('GET', '/api/admin/rooms').then(r => (myRooms = r.rooms || []));
+  const allRooms = () => [...(myRooms || []), ...STOCK_ROOMS];
+  const roomThumb = rm => rm.thumb || `/static/rooms/thumbs/${rm.id}.jpg`;
   const WALL_CHOICES = [['theme', 'Blush white', '#F4ECE6'], ['white', 'Gallery white', '#F1EFEA'], ['plaster', 'Warm plaster', '#E3D3BD'], ['sage', 'Sage', '#B9C2AE'],
     ['charcoal', 'Charcoal', '#34322F'], ['brick', 'Exposed brick', 'url(/static/walls/brick-s.jpg) center / cover'], ['brick-white', 'Painted brick', 'url(/static/walls/brick-white-s.jpg) center / cover'],
     ['concrete', 'Concrete', 'url(/static/walls/concrete-s.jpg) center / cover'], ['oak', 'Oak panelling', 'url(/static/walls/oak-s.jpg) center / cover'], ['limewash', 'Limewash', 'url(/static/walls/limewash-s.jpg) center / cover']];
@@ -260,7 +264,8 @@
     [/^#\/commissions\/(\d+)$/, viewCommissionEditor],
     [/^#\/subscribers$/, viewSubscribers],
     [/^#\/settings$/, viewSettings],
-    [/^#\/words$/, viewWords]
+    [/^#\/words$/, viewWords],
+    [/^#\/rooms$/, viewRooms]
   ];
 
   function go(hash) {
@@ -434,6 +439,8 @@
           <span class="tile-text"><strong>Finished commissions</strong><span id="c-com">${t.com}</span></span>${I.chev}</a></li>
         <li><a class="tile" href="#/subscribers"><span class="tile-icon">${I.people}</span>
           <span class="tile-text"><strong>Subscribers</strong><span id="c-subs">${t.subs}</span></span>${I.chev}</a></li>
+        <li><a class="tile" href="#/rooms"><span class="tile-icon">${I.frame}</span>
+          <span class="tile-text"><strong>Room photos</strong><span>Your own rooms for the “in a room” pictures</span></span>${I.chev}</a></li>
         <li><a class="tile" href="#/words"><span class="tile-icon">${I.pen}</span>
           <span class="tile-text"><strong>Website words</strong><span>Headings, your story, contact details</span></span>${I.chev}</a></li>
         <li><a class="tile" href="#/settings"><span class="tile-icon">${I.gear}</span>
@@ -780,11 +787,8 @@
           <p class="section-hint">Your website chooses these for you. Pick your own if you’d like this painting shown a particular way.</p>
           <fieldset class="field">
             <legend class="label">Room for the “in a room” picture</legend>
-            <div class="pick-grid">
-              <label class="pick pick-auto"><input type="radio" name="room" value=""${v.room ? '' : ' checked'}><span class="pick-face">Let the website choose</span></label>
-              ${ROOM_LIST.map(rm => `<label class="pick" data-room="${rm.id}"><input type="radio" name="room" value="${rm.id}"${v.room === rm.id ? ' checked' : ''}>
-                <img src="/static/rooms/thumbs/${rm.id}.jpg" alt="" loading="lazy" decoding="async"><span class="pick-name">${esc(rm.name || rm.id)}</span></label>`).join('')}
-            </div>
+            <div class="pick-grid" id="room-grid">${roomTiles(v.room)}</div>
+            <p class="hint"><a class="btn-link" href="#/rooms">Add your own room photos</a></p>
             <p class="hint" id="room-hint" hidden></p>
           </fieldset>
           <fieldset class="field">
@@ -909,8 +913,15 @@
       app.addEventListener('change', e => {
         if (e.target.name === 'wall') wallName.textContent = (WALL_CHOICES.find(w => w[0] === e.target.value) || [0, 'The website starts on its usual wall'])[1];
       });
+      if (myRooms === null) loadMyRooms().then(() => {
+        const g = $('#room-grid'); if (!g) return;
+        const cur = ($('input[name="room"]:checked') || {}).value || v.room || '';
+        const untouched = JSON.stringify(readFields()) === initial;
+        g.innerHTML = roomTiles(cur);
+        if (untouched) initial = JSON.stringify(readFields());
+      }).catch(() => {});
       const checkRoom = () => {
-        const id = ($('input[name="room"]:checked') || {}).value, rm = ROOM_LIST.find(x => x.id === id);
+        const id = ($('input[name="room"]:checked') || {}).value, rm = allRooms().find(x => x.id === id);
         const w = Number(f.w.value), h = Number(f.h.value);
         const tooBig = rm && w > 0 && h > 0 && window.Rooms && !window.Rooms.fits(rm, { w: Math.max(w, h) === w ? w : w, h }) && !window.Rooms.fits(rm, { w: h, h: w });
         roomHint.hidden = !tooBig;
@@ -1386,6 +1397,155 @@
       ta.remove();
       return ok;
     } catch { return false; }
+  }
+
+  function roomTiles(sel) {
+    return `<label class="pick pick-auto"><input type="radio" name="room" value=""${sel ? '' : ' checked'}><span class="pick-face">Let the website choose</span></label>` +
+      allRooms().map(rm => `<label class="pick${rm.custom ? ' pick-mine' : ''}" data-room="${rm.id}"><input type="radio" name="room" value="${rm.id}"${sel === rm.id ? ' checked' : ''}>
+        <img src="${esc(roomThumb(rm))}" alt="" loading="lazy" decoding="async"><span class="pick-name">${esc(rm.name || rm.id)}</span></label>`).join('');
+  }
+
+  // ---------- Room photos (Tanya's own rooms) ----------
+
+  async function viewRooms(m, alive) {
+    setBar({ href: '#/', label: 'Home' });
+    loading('Room photos');
+    try { await loadMyRooms(); }
+    catch (e) {
+      if (!alive() || quiet(e)) return;
+      failed('Room photos', e, () => route(), { href: '#/', label: 'Back to home' });
+      return;
+    }
+    if (!alive()) return;
+    const list = () => myRooms.length ? `<ul class="room-list">${myRooms.map(rm => `<li class="room-item">
+        <img src="${esc(rm.thumb)}" alt="">
+        <div class="room-item-body"><strong>${esc(rm.name)}</strong>
+          <span class="room-item-sub">${rm.auto ? 'Used for any painting' : 'Only for paintings you choose it for'}</span>
+          <div class="room-item-acts"><button type="button" class="btn btn-secondary btn-small" data-edit-room="${rm.id}">Change</button>
+            <button type="button" class="btn btn-small btn-icon btn-remove" data-del-room="${rm.id}" aria-label="Delete ${esc(rm.name)}">${I.trash}</button></div></div></li>`).join('')}</ul>`
+      : `<p class="empty">No room photos of your own yet.</p>`;
+    mount(`<h1 tabindex="-1">Room photos</h1>
+      <p class="lede">Your website shows each painting in a room, at its real size. Add photos of your own rooms (or your clients’) and they’ll be used too.</p>
+      <div id="rooms-body">${list()}</div>
+      <input type="file" id="room-file" accept="image/*" class="visually-hidden" tabindex="-1" aria-hidden="true">
+      <button type="button" class="btn btn-primary btn-block" id="add-room">${I.plus}Add a room photo</button>
+      <p class="section-hint" style="margin-top:14px">Tip: a straight-on photo of a wall works best, with a sofa, table or bed in it so the size is easy to judge.</p>`, 'Room photos');
+
+    const body = $('#rooms-body'), file = $('#room-file');
+    $('#add-room').addEventListener('click', () => file.click());
+    file.addEventListener('change', async () => {
+      const f = file.files && file.files[0]; file.value = '';
+      if (!f) return;
+      let img;
+      try { img = await decodeImage(f); } catch { toast('That photo could not be opened. Please try another.', { error: true }); return; }
+      const lg = drawScaled(img.src, img.w, img.h, 1600), th = drawScaled(lg, lg.width, lg.height, 360);
+      img.done();
+      const preview = lg.toDataURL('image/jpeg', 0.8);
+      calibrate({ src: preview, w: lg.width, h: lg.height, name: '', auto: true }, async vals => {
+        const [lgBlob, thBlob] = await Promise.all([canvasToJpeg(lg, 0.84), canvasToJpeg(th, 0.8)]);
+        const fd = new FormData();
+        fd.append('lg', lgBlob, 'room.jpg'); fd.append('th', thBlob, 'thumb.jpg');
+        Object.entries({ ...vals, auto: vals.auto ? '1' : '0', width: lg.width, height: lg.height }).forEach(([k, v]) => fd.append(k, String(v)));
+        await upload('/api/admin/rooms', fd, () => {});
+      });
+    });
+    body.addEventListener('click', async e => {
+      const ed = e.target.closest('[data-edit-room]'), del = e.target.closest('[data-del-room]');
+      if (ed) {
+        const rm = myRooms.find(x => x.id === ed.dataset.editRoom);
+        const im = new Image(); im.src = rm.src;
+        try { await im.decode(); } catch { /* still try */ }
+        calibrate({ src: rm.src, w: im.naturalWidth || rm.a * 1000, h: im.naturalHeight || 1000, name: rm.name, auto: rm.auto, x: rm.x, y: rm.y, s: rm.s }, vals =>
+          api('PUT', `/api/admin/rooms/${rm.id.slice(1)}`, vals));
+      } else if (del) {
+        const rm = myRooms.find(x => x.id === del.dataset.delRoom);
+        const yes = await confirmBox({ title: `Delete “${rm.name}”?`, body: 'Paintings that used it will go back to rooms the website picks.', ok: 'Delete room photo', cancel: 'Keep it', danger: true });
+        if (!yes) return;
+        try { await api('DELETE', `/api/admin/rooms/${rm.id.slice(1)}`); await loadMyRooms(); body.innerHTML = list(); toast('Room photo deleted.'); }
+        catch (ex) { if (!quiet(ex)) toast(ex.message, { error: true }); }
+      }
+    });
+
+    // Tap the spot, then the two ends of something whose width you know.
+    function calibrate(room, save) {
+      const a = room.w / room.h;
+      let st = { x: room.x, y: room.y, s: room.s, ax: null, ay: null, bx: null, by: null, step: room.x != null ? 'done' : 'spot' };
+      const STEPS = {
+        spot: 'Step 1 of 3: tap the wall where a painting should hang (the middle of it).',
+        a: 'Step 2 of 3: tap one end of something you know the width of, like the sofa, a table or a door.',
+        b: 'Step 3 of 3: now tap the other end of it.',
+        cm: 'How wide is it in real life?',
+        done: 'The frame shows how a 50 × 40 cm painting would look there. Happy? Tap Save.'
+      };
+      mount(`<h1 tabindex="-1">${room.x != null ? 'Change room photo' : 'Add a room photo'}</h1>
+        <p class="cal-step" id="cal-step" role="status" aria-live="polite"></p>
+        <div class="cal-stage" id="cal-stage" style="aspect-ratio:${room.w} / ${room.h}">
+          <img src="${esc(room.src)}" alt="Your room photo" draggable="false">
+          <span class="cal-ghost" hidden><i>50 × 40 cm</i></span>
+          <svg class="cal-line" viewBox="0 0 1000 ${Math.round(1000 / a)}" preserveAspectRatio="none" hidden><line stroke-width="5"/></svg>
+          <span class="cal-dot cal-a" hidden></span><span class="cal-dot cal-b" hidden></span><span class="cal-spot" hidden></span>
+        </div>
+        <div class="stack cal-tools">
+          <button type="button" class="btn btn-secondary btn-small" id="cal-respot">Move the spot</button>
+          <button type="button" class="btn btn-secondary btn-small" id="cal-remeasure">Measure again</button>
+        </div>
+        <div class="field" id="cal-cm-wrap" hidden>
+          <label for="cal-cm">How wide is it in real life?</label>
+          <div class="affix suffix"><input type="number" id="cal-cm" inputmode="decimal" min="5" max="1000" step="any"><span>cm</span></div>
+          <p class="hint">Roughly is fine: a 3-seater sofa is about 200 cm, a bedside table 45 cm, a door 80 cm.</p>
+        </div>
+        <div class="field"><label for="cal-name">Name</label><input type="text" id="cal-name" maxlength="60" value="${esc(room.name)}" placeholder="For example: My lounge"></div>
+        <label class="check-row"><input type="checkbox" id="cal-auto"${room.auto ? ' checked' : ''}> Use this room for any painting</label>
+        <p class="hint">Untick to keep it only for paintings you choose it for.</p>
+        <p class="form-msg" id="cal-msg" role="status" aria-live="polite"></p>
+        <div class="stack"><button type="button" class="btn btn-primary btn-block" id="cal-save">Save room photo</button>
+          <a class="btn btn-secondary btn-block" href="#/rooms" id="cal-cancel">Cancel</a></div>`, 'Room photo');
+      const stage = $('#cal-stage'), cm = $('#cal-cm'), pct = v => (v * 100).toFixed(2) + '%';
+      function draw() {
+        $('#cal-step').textContent = STEPS[st.step];
+        const sp = $('.cal-spot', stage), A = $('.cal-a', stage), B = $('.cal-b', stage), ln = $('.cal-line', stage), gh = $('.cal-ghost', stage);
+        sp.hidden = st.x == null; if (!sp.hidden) { sp.style.left = pct(st.x); sp.style.top = pct(st.y); }
+        A.hidden = st.ax == null; if (!A.hidden) { A.style.left = pct(st.ax); A.style.top = pct(st.ay); }
+        B.hidden = st.bx == null; if (!B.hidden) { B.style.left = pct(st.bx); B.style.top = pct(st.by); }
+        ln.hidden = st.bx == null;
+        if (!ln.hidden) { const l = $('line', ln), H = 1000 / a; l.setAttribute('x1', st.ax * 1000); l.setAttribute('y1', st.ay * H); l.setAttribute('x2', st.bx * 1000); l.setAttribute('y2', st.by * H); }
+        gh.hidden = !(st.x != null && st.s);
+        if (!gh.hidden) { const gw = 50 * st.s, gh2 = 40 * st.s * a; Object.assign(gh.style, { left: pct(st.x - gw / 2), top: pct(st.y - gh2 / 2), width: pct(gw), height: pct(gh2) }); }
+        $('#cal-cm-wrap').hidden = !(st.step === 'cm' || (st.bx != null && st.step === 'done'));
+      }
+      function measure() {
+        const w = Number(cm.value);
+        if (st.bx == null || !(w > 0)) return;
+        const d = Math.hypot(st.bx - st.ax, (st.by - st.ay) / a);   // as a fraction of the photo's width
+        st.s = d / w; st.step = 'done'; draw();
+      }
+      stage.addEventListener('click', e => {
+        const b = stage.getBoundingClientRect(), fx = (e.clientX - b.left) / b.width, fy = (e.clientY - b.top) / b.height;
+        if (st.step === 'spot') { st.x = fx; st.y = fy; st.step = st.s ? 'done' : 'a'; }
+        else if (st.step === 'a') { st.ax = fx; st.ay = fy; st.bx = null; st.step = 'b'; }
+        else if (st.step === 'b') { st.bx = fx; st.by = fy; st.step = 'cm'; setTimeout(() => cm.focus(), 50); }
+        draw();
+      });
+      cm.addEventListener('input', measure);
+      $('#cal-respot').addEventListener('click', () => { st.step = 'spot'; draw(); });
+      $('#cal-remeasure').addEventListener('click', () => { st.ax = st.bx = null; st.s = st.s && st.x != null ? st.s : null; st.step = 'a'; cm.value = ''; draw(); });
+      $('#cal-save').addEventListener('click', async () => {
+        const msg = $('#cal-msg'), btn = $('#cal-save');
+        if (st.x == null) { msg.className = 'form-msg err'; msg.textContent = 'Tap the wall where a painting should hang first.'; return; }
+        if (!st.s) { msg.className = 'form-msg err'; msg.textContent = 'Mark something in the photo and type how wide it is, so the website knows the size.'; return; }
+        btn.disabled = true; btn.textContent = 'Saving…'; msg.className = 'form-msg'; msg.textContent = '';
+        try {
+          await save({ name: $('#cal-name').value.trim() || 'My room', x: +st.x.toFixed(4), y: +st.y.toFixed(4), s: +st.s.toPrecision(5), auto: $('#cal-auto').checked });
+          toast('Room photo saved.');
+          myRooms = null; route();
+        } catch (ex) {
+          if (!quiet(ex)) { msg.className = 'form-msg err'; msg.textContent = ex.message; }
+          btn.disabled = false; btn.textContent = 'Save room photo';
+        }
+      });
+      $('#cal-cancel').addEventListener('click', e => { e.preventDefault(); route(); });
+      draw();
+    }
   }
 
   // ---------- Website words ----------

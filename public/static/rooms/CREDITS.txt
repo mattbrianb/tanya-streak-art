@@ -15,3 +15,9 @@ fluted-dresser.jpg     https://unsplash.com/photos/a-white-cabinet-in-a-room-wit
 cream-mantel.jpg       https://unsplash.com/photos/a-couple-of-vases-sitting-on-top-of-a-mantle-qu_My_4DPxw
 sunlit-shelf.jpg       https://unsplash.com/photos/a-couple-of-vases-sitting-on-top-of-a-shelf-w7lBBeIOHoc
 white-shelf.jpg        https://unsplash.com/photos/a-shelf-with-two-vases-and-a-lamp-on-it-1GdYuu3cM_w
+sofa-wall.jpg          https://unsplash.com/photos/a-couch-with-a-plant-on-top-of-it-jCjqzVAh6PI
+oak-dresser.jpg        https://unsplash.com/photos/a-living-room-with-a-couch-and-a-dresser-Ha_S_TX6Vc4
+console-desk.jpg       https://unsplash.com/photos/a-white-wall-with-a-wooden-bench-and-a-plant-SKTgUNVocPM
+linen-bed.jpg          https://unsplash.com/photos/white-bed-pillow-on-brown-wooden-bed-frame-gVKmonDbotU
+sunlit-nightstand.jpg  https://unsplash.com/photos/table-lamp-on-white-wooden-nightstand-beside-bed-PhwbTwdZ3f4
+twin-beds.jpg          https://unsplash.com/photos/a-bed-with-a-wooden-headboard-BZILE9ZE70I

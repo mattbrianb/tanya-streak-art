@@ -3,6 +3,7 @@
 //                       and the Christmas collection's state (on/off, wording, wrapped count).
 // GET /api/paintings?slug=x → one painting.
 import { json, error, loadPaintings, getSetting, christmasInfo } from '../../lib/util.js';
+import { loadRooms } from '../../lib/rooms.js';
 
 export async function onRequestGet({ request, env }) {
   const slug = new URL(request.url).searchParams.get('slug');
@@ -12,7 +13,8 @@ export async function onRequestGet({ request, env }) {
   const tiers = JSON.parse(await getSetting(env.DB, 'commission_tiers', '[]'));
   const christmas = slug ? null : await christmasInfo(env.DB);
   const feature = Number(await getSetting(env.DB, 'home_feature', '0')) || null;
-  return json({ paintings, commissions, commission_tiers: tiers, christmas, feature }, {
+  const rooms = await loadRooms(env.DB);   // Tanya's own room photos
+  return json({ paintings, commissions, commission_tiers: tiers, christmas, feature, rooms }, {
     headers: { 'cache-control': 'public, max-age=0, s-maxage=30' }
   });
 }

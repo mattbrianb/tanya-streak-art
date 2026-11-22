@@ -53,6 +53,7 @@
       if (!r.ok) throw new Error('api');
       return r.json();
     }).then(function (d) {
+      if (window.Rooms && d.rooms) Rooms.add(d.rooms);
       window.TANYA = {
         name: 'Tanya Streak Art', tiers: d.commission_tiers || [],
         paintings: d.paintings.filter(function (p) { return p.images.length; }).map(shape),
