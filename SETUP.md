@@ -120,6 +120,8 @@ If `--file` fails with "Authentication error [code: 10000]" (the OAuth login can
 - **`.com`**: buy it straight from **Cloudflare Registrar** at cost. It is set up automatically.
 - Then, in the Pages project, go to **Custom domains → Set up a domain**. Add both `tanyastreakart.co.za` and `www.`. HTTPS is automatic.
 
+**Done for tanyastreakart.co.za (2026-11-22):** registered at Domains.co.za with Cloudflare's nameservers (elijah/jocelyn). In the zone: proxied CNAMEs `www` and `@` → `tanya-streak-art.pages.dev`, both added as Pages custom domains; a redirect rule sends `tanyastreakart.co.za/*` to `https://www.tanyastreakart.co.za/` (301, query string kept); Always Use HTTPS is on. The site's address is **https://www.tanyastreakart.co.za**.
+
 ## Handing over to Tanya
 
 - Send her the portal link: `https://<domain>/portal/`, and the password.
