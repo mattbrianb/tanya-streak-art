@@ -2,12 +2,13 @@
    Room photos: Unsplash (free licence), see /static/rooms/CREDITS.txt.
    Each room records where a painting hangs (x, y as fractions of the photo), how big a centimetre is
    (s = fraction of photo width per cm), the largest painting that wall takes, the size that looks best
-   there (ideal, long edge in cm), its light and its warmth. */
+   there (ideal, long edge in cm), its light and its warmth. minL: the smallest long edge that doesn't look
+   lost there (a mini alone on a big fireplace reads as a mistake, even at true scale). */
 (function () {
   var ROOMS = [
     { id: 'bright-white-room', a: 1.4995, x: .44,  y: .30,  align: 'center', s: .0019,  maxW: 140, maxH: 100, temp: 0,  sx: -1,  tint: 'rgba(255,250,240,.0)', ideal: 80, bright: 1.02 },
     { id: 'beige-vases',       a: 1.4401, x: .36,  y: .38,  align: 'center', s: .0022,  maxW: 110, maxH: 100, temp: 1,  sx: 0,   tint: 'rgba(214,196,160,.10)', ideal: 60, bright: .97 },
-    { id: 'grey-fireplace',    a: 1.5023, x: .465, y: .262, align: 'bottom', s: .00283, maxW: 120, maxH: 50,  temp: -1, sx: .6,  tint: 'rgba(120,130,140,.08)', ideal: 45, bright: .96 },
+    { id: 'grey-fireplace',    a: 1.5023, x: .465, y: .262, align: 'bottom', s: .00337, maxW: 110, maxH: 42,  minL: 35, temp: -1, sx: .6,  tint: 'rgba(120,130,140,.08)', ideal: 45, bright: .96 },
     { id: 'panelled-dining',   a: 1.3344, x: .337, y: .40,  align: 'center', s: .00281, maxW: 62,  maxH: 90,  temp: 1,  sx: .5,  tint: 'rgba(230,200,170,.10)', ideal: 50, bright: .97 },
     { id: 'sunlit-dining',     a: 1.3333, x: .22,  y: .576, align: 'bottom', s: .0027,  maxW: 120, maxH: 110, temp: 1,  sx: -1,  tint: 'rgba(150,110,60,.22)',  ideal: 75, bright: .82 },
     { id: 'grey-sofa',         a: 1.7778, x: .36,  y: .34,  align: 'bottom', s: .0032,  maxW: 150, maxH: 58,  temp: -1, sx: 0,   tint: 'rgba(200,205,210,.06)', ideal: 100, bright: 1 },
@@ -45,7 +46,7 @@
   function pick(p, warm) {
     var z = sizeOf(p), best = null, bestScore = -1e9;
     ROOMS.forEach(function (r) {
-      if (z.w > r.maxW || z.h > r.maxH) return;
+      if (z.w > r.maxW || z.h > r.maxH || (r.minL && Math.max(z.w, z.h) < r.minL)) return;
       var fit = Math.abs(Math.log(Math.max(z.w, z.h) / r.ideal)); // 0 = the size this wall suits best
       var score = -(warm * 4) * r.temp                            // warm art → cool room and vice versa
         - fit * 1.6                                               // small works on shelves, big ones over sofas

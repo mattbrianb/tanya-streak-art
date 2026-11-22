@@ -718,3 +718,7 @@ dialog[open] { animation: dlg-in .18s ease-out; }
 .choice:has(input:disabled) { opacity: .55; }
 .date-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 @media (prefers-reduced-motion: reduce) { .xm-peek { transition: none; } }
+
+/* size typed the other way round from the photo */
+.size-hint { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 10px; padding: 10px 12px; border-radius: 10px; background: var(--ox-soft); color: var(--ink); font-size: 15px; }
+.size-hint[hidden] { display: none; }

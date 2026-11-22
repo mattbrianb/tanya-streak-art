@@ -714,6 +714,7 @@
               </div>
             </div>
             <p class="field-error" id="e-size" hidden></p>
+            <p class="size-hint" id="h-swap" hidden><span></span><button type="button" class="btn btn-secondary btn-small" id="swap-size">Swap them</button></p>
           </fieldset>
 
           <div class="field">
@@ -829,6 +830,22 @@
         if (st.christmas_drop) el.textContent = `${dropLabel(st.christmas_drop)}. Until then it stays wrapped on your home page.`;
         else if (!drop.checked) drop.disabled = true;
       }).catch(() => {});
+    }
+
+    // The cover photo is landscape but the size is taller than wide (or the other way round)?
+    const swapHint = $('#h-swap');
+    function checkOrientation() {
+      if (!swapHint) return;
+      const img = listEl.querySelector('img'), w = Number(f.w.value), h = Number(f.h.value);
+      const r = img && img.naturalWidth ? img.naturalWidth / img.naturalHeight : 0;
+      const wrong = w > 0 && h > 0 && r && ((r > 1.08 && w < h) || (r < 0.92 && w > h));
+      swapHint.hidden = !wrong;
+      if (wrong) swapHint.querySelector('span').textContent = `Your photo is ${r > 1 ? 'wider than it is tall' : 'taller than it is wide'}, so should the size be ${h} × ${w} cm?`;
+    }
+    if (swapHint) {
+      [f.w, f.h].forEach(el => el.addEventListener('input', checkOrientation));
+      listEl.addEventListener('load', checkOrientation, true);
+      $('#swap-size').addEventListener('click', () => { const t = f.w.value; f.w.value = f.h.value; f.h.value = t; checkOrientation(); f.w.focus(); });
     }
 
     f.medium.addEventListener('change', () => {

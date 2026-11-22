@@ -12,12 +12,16 @@
 
   /* ---------- data ---------- */
   function shape(p) {
-    var cover = p.images[0] || {};
-    var ratio = p.width_cm && p.height_cm ? p.width_cm / p.height_cm : (cover.width && cover.height ? cover.width / cover.height : 1);
+    var cover = p.images[0] || {}, w = p.width_cm, h = p.height_cm;
+    // Width and height typed the wrong way round (a landscape photo entered as 18 × 24, say):
+    // the photo shows which way the painting really sits, so follow it.
+    var pr = cover.width && cover.height ? cover.width / cover.height : 0;
+    if (w && h && pr && ((pr > 1.08 && w < h) || (pr < 0.92 && w > h))) { var t = w; w = h; h = t; }
+    var ratio = w && h ? w / h : (pr || 1);
     return {
       id: p.slug, dbId: p.id, title: p.title, medium: p.medium, description: p.description,
       blurb: (p.description || '').split(/(?<=[.!?])\s/)[0],
-      status: p.status, price: p.price, w: p.width_cm, h: p.height_cm, ratio: ratio,
+      status: p.status, price: p.price, w: w, h: h, ratio: ratio,
       images: p.images, url: '/painting/' + p.slug, christmas: !!p.christmas, created: p.created_at
     };
   }
