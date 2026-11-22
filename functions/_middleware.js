@@ -13,6 +13,7 @@ async function siteText(env) {
 }
 
 const HOME = 'https://www.tanyastreakart.co.za';
+const BOOT = Date.now().toString(36);   // fallback release stamp when the commit isn't known
 
 export async function onRequest(ctx) {
   const url = new URL(ctx.request.url);
@@ -22,10 +23,19 @@ export async function onRequest(ctx) {
   }
   const res = await ctx.next();
   const type = res.headers.get('content-type') || '';
-  if (ctx.request.method !== 'GET' || !type.includes('text/html') || /^\/(portal|_options|api)\b/.test(url.pathname)) return res;
+  if (ctx.request.method !== 'GET' || !type.includes('text/html') || /^\/(_options|api)\b/.test(url.pathname)) return res;
+
+  // Stamp our scripts and stylesheets with this release, so browsers fetch the new ones straight after
+  // an update instead of reusing an old copy.
+  const ver = String(ctx.env.CF_PAGES_COMMIT_SHA || BOOT).slice(0, 10);
+  const stamp = attr => ({ element(el) { const u = el.getAttribute(attr); if (u && u.startsWith('/') && !u.includes('?')) el.setAttribute(attr, `${u}?v=${ver}`); } });
+  const versioned = new HTMLRewriter()
+    .on('script[src^="/js/"], script[src^="/portal/"]', stamp('src'))
+    .on('link[rel="stylesheet"][href^="/css/"], link[rel="stylesheet"][href^="/portal/"]', stamp('href'));
+  if (url.pathname.startsWith('/portal')) return versioned.transform(res);
 
   let s;
-  try { s = await siteText(ctx.env); } catch { return res; }
+  try { s = await siteText(ctx.env); } catch { return versioned.transform(res); }
   const v = k => s[k] || DEF[k] || '';
   const phone = v('site_phone');
   const cfg = {
@@ -34,7 +44,7 @@ export async function onRequest(ctx) {
   };
   const links = { instagram: cfg.instagram, facebook: cfg.facebook };
 
-  return new HTMLRewriter()
+  return versioned.transform(new HTMLRewriter()
     .on('head', { element(el) { el.append(`<script>window.SITE_CFG=${JSON.stringify(cfg).replace(/</g, '\\u003c')}</script>`, { html: true }); } })
     .on('[data-edit]', {
       element(el) {
@@ -46,5 +56,5 @@ export async function onRequest(ctx) {
     .on('[data-link]', { element(el) { const u = links[el.getAttribute('data-link')]; if (u) el.setAttribute('href', u); } })
     .on('[data-contact="phone"]', { element(el) { el.setInnerContent(esc(phone), { html: true }); } })
     .on('[data-contact="location"]', { element(el) { el.setInnerContent(esc(cfg.location), { html: true }); } })
-    .transform(res);
+    .transform(res));
 }
