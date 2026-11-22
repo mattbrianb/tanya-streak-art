@@ -44,20 +44,35 @@
   // Pick the room: it must fit the painting; prefer contrast in warmth and a wall that suits its size.
   // The choice depends only on the painting, so it gets the same room on every page.
   function fits(r, z) { return !(z.w > r.maxW || z.h > r.maxH); }
+  // Pick the room. Tanya's own choice wins (if the painting fits that wall). Otherwise every room the
+  // painting fits is scored on: a wall that suits its size, a wall that suits its shape (landscape over
+  // sofas and sideboards, tall works in narrower spots), and a gentle warm/cool contrast. One of the best
+  // few is then chosen per painting, so a collection spreads across rooms instead of all landing in one;
+  // rooms already used on this page count against a repeat.
+  var used = {};
   function pick(p, warm) {
-    var z = sizeOf(p), best = null, bestScore = -1e9;
-    // Tanya chose a room for this painting in her portal: use it, as long as the painting fits that wall.
+    var z = sizeOf(p);
     var own = p.room && ROOMS.filter(function (r) { return r.id === p.room; })[0];
     if (own && fits(own, z)) return own;
+    var long = Math.max(z.w, z.h), aspect = z.w / z.h, cands = [];
     ROOMS.forEach(function (r) {
-      if (z.w > r.maxW || z.h > r.maxH || (r.minL && Math.max(z.w, z.h) < r.minL)) return;
-      var fit = Math.abs(Math.log(Math.max(z.w, z.h) / r.ideal)); // 0 = the size this wall suits best
-      var score = -(warm * 4) * r.temp                            // warm art → cool room and vice versa
-        - fit * 1.6                                               // small works on shelves, big ones over sofas
-        + ((hash(p.id + r.id) % 100) / 100) * .6;                 // stable per-painting variety
-      if (score > bestScore) { bestScore = score; best = r; }
+      if (!fits(r, z) || (r.minL && long < r.minL)) return;
+      var ratio = long / r.ideal;
+      if (ratio < .36) return;                                   // would look lost on that wall
+      var wall = r.maxW / r.maxH;                                 // >1: a wide wall, <1: a tall spot
+      var shape = -Math.abs(Math.log(aspect) - Math.log(wall) * .6);
+      var score = -Math.abs(Math.log(ratio)) * 1.1               // the size this wall suits
+        + shape * .7                                             // the shape this wall suits
+        - warm * 1.5 * r.temp                                    // warm art → cooler room, gently
+        - (used[r.id] || 0) * .45;                               // fewer repeats on one page
+      cands.push({ r: r, score: score });
     });
-    return best;
+    if (!cands.length) return null;
+    cands.sort(function (a, b) { return b.score - a.score; });
+    var top = cands.filter(function (c) { return c.score > cands[0].score - 1.4; }).slice(0, 5);
+    var r = top[hash(p.id) % top.length].r;                      // stable for each painting
+    used[r.id] = (used[r.id] || 0) + 1;
+    return r;
   }
 
   // Markup for the room layer. Positions are % of the photo; the layer is cropped to its box by CSS.
