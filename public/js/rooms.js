@@ -18,7 +18,7 @@
     { id: 'fluted-dresser', name: 'Above a fluted dresser',    a: 1.7778, x: .67,  y: .466, align: 'bottom', s: .0030,  maxW: 150, maxH: 85,  temp: 1,  sx: 1,   tint: 'rgba(235,215,185,.10)', ideal: 80, bright: .98 },
     { id: 'cream-mantel', name: 'Cream mantelpiece',      a: 1.7563, x: .67,  y: .79,  align: 'bottom', s: .0055,  maxW: 72,  maxH: 70,  temp: 1,  sx: 1,   tint: 'rgba(235,220,195,.10)', ideal: 45, bright: .98 },
     { id: 'sunlit-shelf', name: 'Sunlit shelf',      a: 1.3093, x: .77,  y: .40,  align: 'center', s: .009,   maxW: 34,  maxH: 45,  temp: 1,  sx: 1,   tint: 'rgba(240,180,110,.18)', ideal: 25, bright: .95 },
-    { id: 'white-shelf', name: 'White shelf',       a: 1.4995, x: .48,  y: .55,  align: 'bottom', s: .0043,  maxW: 150, maxH: 80,  temp: -1, sx: 1,   tint: 'rgba(235,235,235,.04)', ideal: 55, bright: 1 },
+    { id: 'white-shelf', name: 'White shelf',       a: 1.4995, x: .48,  y: .55,  align: 'bottom', s: .0043,  maxW: 150, maxH: 80,  minL: 30, temp: -1, sx: 1,   tint: 'rgba(235,235,235,.04)', ideal: 55, bright: 1 },
     { id: 'sofa-wall',         name: 'Above a pale sofa',          a: 1.7778, x: .353, y: .47,  align: 'bottom', s: .00375, maxW: 160, maxH: 60, minL: 25, temp: 0,  sx: 0,   tint: 'rgba(240,235,225,.04)', ideal: 90, bright: 1 },
     { id: 'oak-dresser',       name: 'Over a pale oak dresser',    a: 1.7778, x: .206, y: .489, align: 'bottom', s: .00298, maxW: 90,  maxH: 85,  temp: 0,  sx: 0,   tint: 'rgba(240,235,225,.04)', ideal: 55, bright: 1 },
     { id: 'console-desk',      name: 'Over a console desk',        a: 1.7778, x: .273, y: .333, align: 'bottom', s: .00378, maxW: 100, maxH: 48,  temp: 0,  sx: 0,   tint: 'rgba(240,235,225,.04)', ideal: 45, bright: 1 },
@@ -102,8 +102,9 @@
     var k = full ? .26 / Math.max(fh, fw) : .34 / Math.max(fh, fw * r.a);
     k = Math.max(1, Math.min(k, ZMAX));
     // zoom origin o (fixed point): pick it so the painting lands near the middle, kept inside 0..1
-    function origin(c) { if (k <= 1.001) return c; var o = (k * c - .5) / (k - 1); return Math.max(0, Math.min(1, o)); }
-    var ox = origin(cx), oy = origin(cy), nx = ox + k * (cx - ox);
+    // (vertically it aims a little above the middle, so the sofa, shelf or bed under the painting stays in view)
+    function origin(c, t) { if (k <= 1.001) return c; var o = (k * c - t) / (k - 1); return Math.max(0, Math.min(1, o)); }
+    var ox = origin(cx, .5), oy = origin(cy, .36), nx = ox + k * (cx - ox);
     return '<span class="room" style="--a:' + r.a + ';--px:' + nx.toFixed(4) + ';--sx:' + r.sx + '" aria-hidden="true">' +
       '<span class="room-in"><span class="room-z" style="transform-origin:' + (ox * 100).toFixed(2) + '% ' + (oy * 100).toFixed(2) + '%;transform:scale(' + k.toFixed(3) + ')">' +
       '<img class="room-bg" src="' + (r.src || '/static/rooms/' + r.id + '.jpg') + '" alt="" loading="lazy" decoding="async">' +
