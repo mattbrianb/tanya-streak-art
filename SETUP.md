@@ -82,11 +82,11 @@ Run these from the `site` folder.
 
 9. **Load the current paintings** (uses the portal, so it needs the password from step 8)
    ```bash
-   node scripts/seed.mjs https://tanya-streak-art.pages.dev "THE-PASSWORD"
+   node scripts/seed.mjs https://www.tanyastreakart.co.za "THE-PASSWORD"
    ```
    It skips any painting that already exists, so it is safe to run twice.
 
-10. **Check it:** open `https://tanya-streak-art.pages.dev`, then sign in at `/portal/`.
+10. **Check it:** open `https://www.tanyastreakart.co.za`, then sign in at `https://www.tanyastreakart.co.za/portal/` (the old `tanya-streak-art.pages.dev` address forwards there).
 
 ## Tanya's logo
 
@@ -163,3 +163,10 @@ D1 keeps 7 days of history on the free plan; see "Time Travel" in the dashboard.
 ```bash
 npx wrangler d1 export tanya-art --remote --output backup.sql
 ```
+
+## Portal logins and self-service (2026-11-22)
+
+- **Two logins:** Tanya's (`password_hash`, or the `ADMIN_PASSWORD` secret until she sets her own) and Matt's (`password_hash_matt`). The password typed decides who is signed in; each changes their own in Portal > Settings, and the two can't be the same. Matt's starting password is in `.prod-secrets.txt` (not in GitHub).
+- **Website words** (Portal > Website words): headings, intro lines, "Meet Tanya", the About story and studio line, the commissions intro, the top strip, and contact details (WhatsApp number, Instagram, Facebook, location). Stored as `site_*`/`home_*`/`about_*` settings; `functions/_middleware.js` writes them into each page as it is served (marked `data-edit`, `data-link`, `data-contact` in the HTML, which holds the defaults). Field list: `lib/sitetext.js`.
+- **How it's shown** (each painting in the portal): room photo for the "in a room" preview, starting wall and frame in "View on a wall", and "Show at the top of my home page" (`settings.home_feature`). Columns from `migrations/0003_display.sql`.
+- `tanya-streak-art.pages.dev` forwards to `https://www.tanyastreakart.co.za` (same path), so the portal is always `https://www.tanyastreakart.co.za/portal/`.

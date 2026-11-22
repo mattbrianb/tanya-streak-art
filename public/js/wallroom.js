@@ -192,6 +192,11 @@
 
   function render() {
     var p = current(), sizes = T.sizesFor(p), size = currentSize();
+    // Tanya's choice for this painting (Portal > How it's shown); otherwise keep whatever is showing
+    var wb = p.wall && el.querySelector('.wr-tone[data-tone="' + p.wall + '"]');
+    if (wb) { el.dataset.tone = p.wall; if (wb.hasAttribute('data-tex')) warmTexture(p.wall); }
+    if (p.frame && el.querySelector('.wr-chip[data-frame="' + p.frame + '"]')) el.dataset.frame = p.frame;
+    syncChips();
     img.src = T.imgSrc(p, 'lg');
     img.alt = p.title + ', ' + p.medium.toLowerCase() + ' by Tanya Streak';
     $('.wr-title').textContent = p.title;

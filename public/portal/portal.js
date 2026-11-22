@@ -45,6 +45,12 @@
   // ---------- Icons ----------
 
   const svg = (d, extra = '') => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" ${extra}>${d}</svg>`;
+  // Choices for "How it's shown". Rooms come from /js/rooms.js (loaded before this script).
+  const ROOM_LIST = (window.Rooms && window.Rooms.list) || [];
+  const WALL_CHOICES = [['theme', 'Blush white', '#F4ECE6'], ['white', 'Gallery white', '#F1EFEA'], ['plaster', 'Warm plaster', '#E3D3BD'], ['sage', 'Sage', '#B9C2AE'],
+    ['charcoal', 'Charcoal', '#34322F'], ['brick', 'Exposed brick', 'url(/static/walls/brick-s.jpg) center / cover'], ['brick-white', 'Painted brick', 'url(/static/walls/brick-white-s.jpg) center / cover'],
+    ['concrete', 'Concrete', 'url(/static/walls/concrete-s.jpg) center / cover'], ['oak', 'Oak panelling', 'url(/static/walls/oak-s.jpg) center / cover'], ['limewash', 'Limewash', 'url(/static/walls/limewash-s.jpg) center / cover']];
+  const FRAME_CHOICES = [['timber', 'Timber & mat'], ['canvas', 'Canvas edge'], ['float', 'Black float'], ['oak', 'Oak']];
   const XSTAR = '<svg class="xm-star" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 .8l1.55 4.6a1.6 1.6 0 0 0 1.05 1.05L15.2 8l-4.6 1.55a1.6 1.6 0 0 0-1.05 1.05L8 15.2l-1.55-4.6a1.6 1.6 0 0 0-1.05-1.05L.8 8l4.6-1.55A1.6 1.6 0 0 0 6.45 5.4z"/></svg>';
   // 'YYYY-MM-DDTHH:MM' in Durban time → "Friday 20 November, 7pm"
   function dropLabel(local) {
@@ -69,6 +75,7 @@
     alert: svg('<circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>'),
     x: svg('<path d="M18 6 6 18M6 6l12 12"/>'),
     mail: svg('<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/>'),
+    pen: svg('<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>'),
     book: svg('<path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/>')
   };
 
@@ -240,6 +247,7 @@
   let renderId = 0;
   let firstRender = true;
   let meCache = null;
+  let whoName = (() => { try { return sessionStorage.getItem('tsa_who') || 'Tanya'; } catch { return 'Tanya'; } })();   // who is signed in
 
   const routes = [
     [/^#\/login$/, viewLogin],
@@ -251,7 +259,8 @@
     [/^#\/commissions\/new$/, viewCommissionEditor],
     [/^#\/commissions\/(\d+)$/, viewCommissionEditor],
     [/^#\/subscribers$/, viewSubscribers],
-    [/^#\/settings$/, viewSettings]
+    [/^#\/settings$/, viewSettings],
+    [/^#\/words$/, viewWords]
   ];
 
   function go(hash) {
@@ -338,7 +347,7 @@
       <h1 tabindex="-1" class="login-logo"><img src="/static/logo.png" width="613" height="245" alt="Tanya Streak Art"></h1>
       <p class="login-sub">Sign in to your website</p>
       <form id="login-form" novalidate>
-        <input type="text" name="username" autocomplete="username" value="Tanya" class="visually-hidden" tabindex="-1" aria-hidden="true">
+        <input type="text" name="username" autocomplete="username" value="${esc(whoName)}" class="visually-hidden" tabindex="-1" aria-hidden="true">
         <div class="field">
           <label for="pw">Password</label>
           <div class="pw-wrap">
@@ -411,7 +420,7 @@
   function viewHome(m, alive) {
     setBar(null);
     const t = countsText(meCache);
-    mount(`<h1 tabindex="-1">Hi Tanya</h1>
+    mount(`<h1 tabindex="-1">Hi ${esc(whoName)}</h1>
       <p class="lede">What would you like to do today?</p>
       <a class="action-hero" href="#/paintings/new">
         <span class="hero-icon">${I.camera}</span>
@@ -425,6 +434,8 @@
           <span class="tile-text"><strong>Finished commissions</strong><span id="c-com">${t.com}</span></span>${I.chev}</a></li>
         <li><a class="tile" href="#/subscribers"><span class="tile-icon">${I.people}</span>
           <span class="tile-text"><strong>Subscribers</strong><span id="c-subs">${t.subs}</span></span>${I.chev}</a></li>
+        <li><a class="tile" href="#/words"><span class="tile-icon">${I.pen}</span>
+          <span class="tile-text"><strong>Website words</strong><span>Headings, your story, contact details</span></span>${I.chev}</a></li>
         <li><a class="tile" href="#/settings"><span class="tile-icon">${I.gear}</span>
           <span class="tile-text"><strong>Settings</strong><span>Prices to order, sign-up box, password</span></span>${I.chev}</a></li>
         <li><a class="tile" href="/" target="_blank" rel="noopener"><span class="tile-icon">${I.globe}</span>
@@ -442,7 +453,9 @@
 
     api('GET', '/api/admin/me').then(r => {
       meCache = r.counts;
+      if (r.name && r.name !== whoName) { whoName = r.name; try { sessionStorage.setItem('tsa_who', r.name); } catch {} }
       if (!alive()) return;
+      const hh = $('h1', app); if (hh) hh.textContent = `Hi ${whoName}`;
       const t2 = countsText(r.counts);
       $('#c-paint').innerHTML = t2.paint;
       $('#c-subs').innerHTML = t2.subs;
@@ -762,6 +775,37 @@
           </div></div>
         </section>`}
 
+        ${isCom ? '' : `<section class="card show-card" aria-labelledby="h-show">
+          <h2 id="h-show">How it’s shown</h2>
+          <p class="section-hint">Your website chooses these for you. Pick your own if you’d like this painting shown a particular way.</p>
+          <fieldset class="field">
+            <legend class="label">Room for the “in a room” picture</legend>
+            <div class="pick-grid">
+              <label class="pick pick-auto"><input type="radio" name="room" value=""${v.room ? '' : ' checked'}><span class="pick-face">Let the website choose</span></label>
+              ${ROOM_LIST.map(rm => `<label class="pick" data-room="${rm.id}"><input type="radio" name="room" value="${rm.id}"${v.room === rm.id ? ' checked' : ''}>
+                <img src="/static/rooms/thumbs/${rm.id}.jpg" alt="" loading="lazy" decoding="async"><span class="pick-name">${esc(rm.name || rm.id)}</span></label>`).join('')}
+            </div>
+            <p class="hint" id="room-hint" hidden></p>
+          </fieldset>
+          <fieldset class="field">
+            <legend class="label">Wall in “View on a wall”</legend>
+            <div class="pick-row">
+              <label class="sw sw-auto"><input type="radio" name="wall" value=""${v.wall ? '' : ' checked'}><span>Website chooses</span></label>
+              ${WALL_CHOICES.map(w => `<label class="sw" title="${w[1]}"><input type="radio" name="wall" value="${w[0]}"${v.wall === w[0] ? ' checked' : ''} aria-label="${w[1]}"><i style="background:${w[2]}"></i></label>`).join('')}
+            </div>
+            <p class="hint" id="wall-name">${esc((WALL_CHOICES.find(w => w[0] === v.wall) || [0, 'The website starts on its usual wall'])[1])}</p>
+          </fieldset>
+          <fieldset class="field">
+            <legend class="label">Frame in “View on a wall”</legend>
+            <div class="pick-row">
+              <label class="pill-choice"><input type="radio" name="frame" value=""${v.frame ? '' : ' checked'}><span>Website chooses</span></label>
+              ${FRAME_CHOICES.map(fr => `<label class="pill-choice"><input type="radio" name="frame" value="${fr[0]}"${v.frame === fr[0] ? ' checked' : ''}><span>${fr[1]}</span></label>`).join('')}
+            </div>
+          </fieldset>
+          <label class="check-row"><input type="checkbox" id="f-feature"> Show this painting at the top of my home page</label>
+          <p class="hint">One painting at a time. While the Christmas collection is switched on, it shows there instead.</p>
+        </section>`}
+
         <section class="card">
           <fieldset>
             <legend class="legend-h2">${E.legend}</legend>
@@ -807,7 +851,11 @@
         description: f.desc.value.trim(),
         status: st ? st.value : 'available',
         kind,
-        ...(isCom ? {} : { christmas: $('#f-xmas').checked, reveal: ($('input[name="reveal"]:checked') || {}).value || 'now' })
+        ...(isCom ? {} : {
+          christmas: $('#f-xmas').checked, reveal: ($('input[name="reveal"]:checked') || {}).value || 'now',
+          room: ($('input[name="room"]:checked') || {}).value || '', wall: ($('input[name="wall"]:checked') || {}).value || '',
+          frame: ($('input[name="frame"]:checked') || {}).value || '', feature: $('#f-feature').checked
+        })
       };
     }
     let initial = JSON.stringify(readFields());
@@ -825,6 +873,13 @@
       xs.addEventListener('change', () => xm.classList.toggle('xm-on', xs.checked));
       // say when the next drop is, so "At the next drop" means something
       api('GET', '/api/admin/settings').then(st => {
+        // is this the painting at the top of the home page? (doesn't count as an unsaved change)
+        const ff = $('#f-feature');
+        if (ff && painting && String(st.home_feature || '') === String(painting.id)) {
+          const untouched = JSON.stringify(readFields()) === initial;
+          ff.checked = true;
+          if (untouched) initial = JSON.stringify(readFields());
+        }
         const el = $('#xm-drop'); if (!el) return;
         const drop = $('input[name="reveal"][value="drop"]');
         if (st.christmas_drop) el.textContent = `${dropLabel(st.christmas_drop)}. Until then it stays wrapped on your home page.`;
@@ -846,6 +901,24 @@
       [f.w, f.h].forEach(el => el.addEventListener('input', checkOrientation));
       listEl.addEventListener('load', checkOrientation, true);
       $('#swap-size').addEventListener('click', () => { const t = f.w.value; f.w.value = f.h.value; f.h.value = t; checkOrientation(); f.w.focus(); });
+    }
+
+    // "How it's shown": name the wall, and say when a chosen room is too small for this painting
+    if (!isCom) {
+      const wallName = $('#wall-name'), roomHint = $('#room-hint');
+      app.addEventListener('change', e => {
+        if (e.target.name === 'wall') wallName.textContent = (WALL_CHOICES.find(w => w[0] === e.target.value) || [0, 'The website starts on its usual wall'])[1];
+      });
+      const checkRoom = () => {
+        const id = ($('input[name="room"]:checked') || {}).value, rm = ROOM_LIST.find(x => x.id === id);
+        const w = Number(f.w.value), h = Number(f.h.value);
+        const tooBig = rm && w > 0 && h > 0 && window.Rooms && !window.Rooms.fits(rm, { w: Math.max(w, h) === w ? w : w, h }) && !window.Rooms.fits(rm, { w: h, h: w });
+        roomHint.hidden = !tooBig;
+        if (tooBig) roomHint.textContent = 'This painting is too big for that wall, so the website will pick a roomier one.';
+      };
+      app.addEventListener('change', e => { if (e.target.name === 'room') checkRoom(); });
+      [f.w, f.h].forEach(el => el.addEventListener('input', checkRoom));
+      checkRoom();
     }
 
     f.medium.addEventListener('change', () => {
@@ -1315,6 +1388,77 @@
     } catch { return false; }
   }
 
+  // ---------- Website words ----------
+
+  async function viewWords(m, alive) {
+    setBar({ href: '#/', label: 'Home' });
+    loading('Website words');
+    let s;
+    try { s = await api('GET', '/api/admin/settings'); }
+    catch (e) {
+      if (!alive() || quiet(e)) return;
+      failed('Website words', e, () => route(), { href: '#/', label: 'Back to home' });
+      return;
+    }
+    if (!alive()) return;
+    const F = s.site_fields, V = s.site, pages = [];
+    F.text.forEach(f => { let g = pages.find(x => x.page === f.page); if (!g) pages.push(g = { page: f.page, fields: [] }); g.fields.push(f); });
+    const field = f => `<div class="field">
+        <label for="w-${f.key}">${esc(f.label)}</label>
+        ${f.multi
+          ? `<textarea id="w-${f.key}" data-key="${f.key}" rows="${Math.min(10, Math.max(4, Math.ceil((V[f.key] || '').length / 70)))}" maxlength="${f.max}">${esc(V[f.key])}</textarea>`
+          : (f.max > 140 ? `<textarea id="w-${f.key}" data-key="${f.key}" rows="3" maxlength="${f.max}">${esc(V[f.key])}</textarea>`
+                         : `<input type="text" id="w-${f.key}" data-key="${f.key}" maxlength="${f.max || 200}" value="${esc(V[f.key])}">`)}
+        ${f.hint ? `<p class="hint">${esc(f.hint)}</p>` : ''}
+        <button type="button" class="btn-link reset-word" data-reset="${f.key}"${V[f.key] === f.def ? ' hidden' : ''}>Put back the original words</button>
+      </div>`;
+
+    mount(`<h1 tabindex="-1">Website words</h1>
+      <p class="lede">Change the wording on your website, then tap Save. Your changes show on the website within a minute.</p>
+      <form id="words" novalidate>
+        ${pages.map(g => `<section class="card"><h2>${esc(g.page)}</h2>${g.fields.map(field).join('')}</section>`).join('')}
+        <p class="section-hint words-tip">In the longer boxes, leave an empty line between paragraphs. To make a link, write the words in square brackets and the address in round brackets, like this: [Instagram](https://www.instagram.com/tanyastreakart/)</p>
+        <section class="card"><h2>Contact details</h2>
+          <p class="section-hint">Used all over your website: the WhatsApp buttons, the icons at the top and the bottom of every page.</p>
+          ${F.contact.map(field).join('')}
+        </section>
+        <div class="savebar">
+          <p class="save-status" id="w-status" role="status" aria-live="polite"></p>
+          <button type="submit" class="btn btn-primary btn-block" id="w-save">Save website words</button>
+        </div>
+      </form>`, 'Website words');
+    document.body.classList.add('has-savebar');
+
+    const form = $('#words'), all = [...F.text, ...F.contact];
+    const read = () => Object.fromEntries($$('[data-key]', form).map(el => [el.dataset.key, el.value]));
+    let base = JSON.stringify(read());
+    guard = () => JSON.stringify(read()) !== base ? 'You have changes to your website words that are not saved yet.' : '';
+
+    form.addEventListener('input', e => {
+      const k = e.target.dataset.key; if (!k) return;
+      const f = all.find(x => x.key === k), b = form.querySelector(`[data-reset="${k}"]`);
+      if (b) b.hidden = e.target.value.trim() === f.def;
+    });
+    form.addEventListener('click', e => {
+      const k = e.target.dataset.reset; if (!k) return;
+      const f = all.find(x => x.key === k), el = $(`#w-${k}`);
+      el.value = f.def; e.target.hidden = true; el.focus();
+    });
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      const st = $('#w-status'), btn = $('#w-save');
+      btn.disabled = true; btn.textContent = 'Saving…'; st.className = 'save-status busy'; st.textContent = 'Saving your words…';
+      try {
+        const r = await api('PUT', '/api/admin/settings', { site: read() });
+        Object.entries(r.site || {}).forEach(([k, v]) => { const el = $(`#w-${k}`); if (el) el.value = v; });
+        base = JSON.stringify(read());
+        st.className = 'save-status ok'; st.textContent = 'Saved. Your website shows the new words within a minute.';
+      } catch (ex) {
+        if (!quiet(ex)) { st.className = 'save-status err'; st.textContent = ex.message; }
+      } finally { btn.disabled = false; btn.textContent = 'Save website words'; }
+    });
+  }
+
   // ---------- Settings ----------
 
   async function viewSettings(m, alive) {
@@ -1412,7 +1556,7 @@
         <h2 id="h-pw">Change password</h2>
         <p class="section-hint">You'll use the new password next time you sign in. Other phones or computers will be signed out.</p>
         <form id="f-pw" novalidate>
-          <input type="text" name="username" autocomplete="username" value="Tanya" class="visually-hidden" tabindex="-1" aria-hidden="true">
+          <input type="text" name="username" autocomplete="username" value="${esc(whoName)}" class="visually-hidden" tabindex="-1" aria-hidden="true">
           <div class="field">
             <label for="pw-cur">Current password</label>
             <input type="password" id="pw-cur" autocomplete="current-password" autocapitalize="off" autocorrect="off" spellcheck="false">

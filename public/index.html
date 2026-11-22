@@ -25,8 +25,8 @@
   <section class="hero" aria-labelledby="hero-h">
     <div class="wrap">
       <div>
-        <h1 id="hero-h">Original oil paintings, made in Durban North</h1>
-        <p>Garden flowers painted from life with a loaded brush and a palette knife. Each painting is a one-off original, signed and ready to hang.</p>
+        <h1 id="hero-h" data-edit="home_title">Original oil paintings, made in Durban North</h1>
+        <p data-edit="home_intro">Garden flowers painted from life with a loaded brush and a palette knife. Each painting is a one-off original, signed and ready to hang.</p>
         <div class="actions">
           <a class="btn" href="/shop/">Shop originals</a>
           <a class="btn ghost" href="/commissions/">Commission a painting</a>
@@ -89,8 +89,8 @@
       <div class="arch"><img src="/static/tanya.jpg" width="1000" height="1094" alt="Tanya Streak, smiling, in her garden" loading="lazy" style="object-position:50% 30%"></div>
       <div>
         <h2 id="about-h">Meet Tanya</h2>
-        <p>Tanya Streak paints florals in oils from her home studio in Durban North: roses in jam jars, hydrangeas, sweet peas and sunflowers, picked from the garden and the market.</p>
-        <p>Small pieces can come with a little display easel; larger ones arrive ready to hang. New work shows up first here, on <a class="link" href="https://www.instagram.com/tanyastreakart/" target="_blank" rel="noopener">Instagram</a> and on <a class="link" href="https://www.facebook.com/tanyastreakart" target="_blank" rel="noopener">Facebook</a>.</p>
+        <div data-edit="home_meet"><p>Tanya Streak paints florals in oils from her home studio in Durban North: roses in jam jars, hydrangeas, sweet peas and sunflowers, picked from the garden and the market.</p>
+        <p>Small pieces can come with a little display easel; larger ones arrive ready to hang. New work shows up first here, on <a class="link" data-link="instagram" href="https://www.instagram.com/tanyastreakart/" target="_blank" rel="noopener">Instagram</a> and on <a class="link" data-link="facebook" href="https://www.facebook.com/tanyastreakart" target="_blank" rel="noopener">Facebook</a>.</p></div>
         <p class="sig" aria-hidden="true">Tanya</p>
       </div>
     </div>
@@ -113,7 +113,7 @@ Site.boot('/').then(function (T) {
   } else {
     document.querySelector('.hero').hidden = false;
   }
-  var hero = P.filter(function (p) { return p.status === 'available'; })[0] || P[0];
+  var hero = P.filter(function (p) { return p.dbId === T.feature; })[0] || P.filter(function (p) { return p.status === 'available'; })[0] || P[0];
   if (hero) {
     var z = Site.sizesFor(hero)[0];
     document.getElementById('hero-fig').innerHTML = '<a href="' + hero.url + '"><img src="' + E(hero.images[0].lg) + '" alt="' + E(hero.title) + ', ' + E(hero.medium.toLowerCase()) + '" fetchpriority="high"></a>' +

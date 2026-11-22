@@ -11,7 +11,8 @@ export async function onRequestGet({ request, env }) {
   const commissions = slug ? [] : await loadPaintings(env.DB, { kind: 'commission' });
   const tiers = JSON.parse(await getSetting(env.DB, 'commission_tiers', '[]'));
   const christmas = slug ? null : await christmasInfo(env.DB);
-  return json({ paintings, commissions, commission_tiers: tiers, christmas }, {
+  const feature = Number(await getSetting(env.DB, 'home_feature', '0')) || null;
+  return json({ paintings, commissions, commission_tiers: tiers, christmas, feature }, {
     headers: { 'cache-control': 'public, max-age=0, s-maxage=30' }
   });
 }

@@ -722,3 +722,23 @@ dialog[open] { animation: dlg-in .18s ease-out; }
 /* size typed the other way round from the photo */
 .size-hint { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 10px; padding: 10px 12px; border-radius: 10px; background: var(--ox-soft); color: var(--ink); font-size: 15px; }
 .size-hint[hidden] { display: none; }
+
+/* "How it's shown": room tiles, wall swatches, frame pills */
+.pick-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 10px; margin-top: 8px; }
+.pick { position: relative; display: flex; flex-direction: column; border: 2px solid var(--line); border-radius: 12px; overflow: hidden; cursor: pointer; background: var(--surface); transition: border-color .15s; }
+.pick input, .sw input, .pill-choice input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.pick img { width: 100%; aspect-ratio: 3 / 2; object-fit: cover; display: block; }
+.pick-name { font-size: 13.5px; line-height: 1.3; padding: 7px 9px 9px; color: var(--ink-2); }
+.pick-face { display: grid; place-items: center; text-align: center; min-height: 100%; aspect-ratio: 3 / 2; padding: 10px; font-weight: 600; font-size: 15px; background: var(--kraft-soft); color: var(--ink); }
+.pick:has(input:checked) { border-color: var(--ox); box-shadow: 0 0 0 2px var(--ox-soft); }
+.pick:has(input:focus-visible), .sw:has(input:focus-visible), .pill-choice:has(input:focus-visible) { outline: 3px solid var(--ox); outline-offset: 2px; }
+.pick-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; align-items: center; }
+.sw { position: relative; width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--line-2); cursor: pointer; display: grid; place-items: center; }
+.sw i { width: 34px; height: 34px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0,0,0,.12); }
+.sw:has(input:checked) { border-color: var(--ox); box-shadow: 0 0 0 2px var(--ox-soft); }
+.sw-auto { width: auto; border-radius: 999px; padding: 0 14px; font-size: 14px; font-weight: 600; color: var(--ink-2); }
+.pill-choice { position: relative; cursor: pointer; }
+.pill-choice span { display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; border-radius: 999px; border: 2px solid var(--line-2); font-size: 15px; font-weight: 600; color: var(--ink-2); }
+.pill-choice input:checked + span { border-color: var(--ox); background: var(--ox-soft); color: var(--ox-2); }
+.reset-word { margin-top: 6px; font-size: 15px; }
+.words-tip { margin: 4px 4px 18px; }

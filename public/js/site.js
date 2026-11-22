@@ -2,7 +2,11 @@
    Loads live paintings from /api, renders the header, footer, painting cards, sign-up forms
    and pop-up, and feeds the Wallroom. */
 (function () {
-  var WHATSAPP = '27792763413', PHONE = '079 276 3413', IG = 'https://www.instagram.com/tanyastreakart/', FB = 'https://www.facebook.com/tanyastreakart';
+  // Contact details and the top strip: Tanya sets them in Portal > Website words (served as SITE_CFG).
+  var CFG = window.SITE_CFG || {};
+  var WHATSAPP = CFG.wa || '27792763413', PHONE = CFG.phone || '079 276 3413',
+    IG = CFG.instagram || 'https://www.instagram.com/tanyastreakart/', FB = CFG.facebook || 'https://www.facebook.com/tanyastreakart',
+    PLACE = CFG.location || 'Durban North, KwaZulu-Natal', ANNOUNCE = CFG.announce || 'Collect in Durban North · Courier across South Africa';
 
   /* ---------- formatting & links ---------- */
   function rand(n) { return 'R' + Math.round(n).toLocaleString('en-ZA').replace(/\s| /g, ','); }
@@ -22,7 +26,8 @@
       id: p.slug, dbId: p.id, title: p.title, medium: p.medium, description: p.description,
       blurb: (p.description || '').split(/(?<=[.!?])\s/)[0],
       status: p.status, price: p.price, w: w, h: h, ratio: ratio,
-      images: p.images, url: '/painting/' + p.slug, christmas: !!p.christmas, created: p.created_at
+      images: p.images, url: '/painting/' + p.slug, christmas: !!p.christmas, created: p.created_at,
+      room: p.room || null, wall: p.wall || null, frame: p.frame || null
     };
   }
   function dims(p) { return p.w && p.h ? num(p.w) + ' × ' + num(p.h) + ' cm' : ''; }
@@ -54,7 +59,7 @@
         commissions: (d.commissions || []).filter(function (p) { return p.images.length; }).map(function (p) {
           var c = shape(p); c.url = '/commissions/completed/#' + p.slug; return c;
         }),
-        christmas: d.christmas || { on: false },
+        christmas: d.christmas || { on: false }, feature: d.feature || null,
         sizesFor: sizesFor, rand: rand, priceText: priceText, waLink: waLink,
         orderLink: orderLink, similarLink: similarLink, imgSrc: imgSrc
       };
@@ -112,7 +117,7 @@
   function header(active) {
     var drop = LS.get('tsa_com') === '1';
     return '<a class="skip" href="#main">Skip to content</a>' +
-      '<div class="announce">Collect in Durban North · Courier across South Africa</div>' +
+      '<div class="announce">' + esc(ANNOUNCE) + '</div>' +
       '<header class="site">' + logoHTML() +
       '<nav class="main" aria-label="Main">' + NAV.map(function (n) {
         return n[0] === '/commissions/' && drop ? comNavHTML(active) : navLink(n, active);
@@ -143,7 +148,7 @@
       '<nav class="links" aria-label="Footer">' + NAV.map(function (n) { return '<a href="' + n[0] + '">' + n[1] + '</a>'; }).join('') +
       '<a href="' + DONE + '" data-done hidden>Completed commissions</a></nav>' +
       '<div class="follow"><p>Follow Tanya for new work and studio news</p><div class="follow-links">' + socialLinks('labels') + '</div></div>' +
-      '<p class="contact">WhatsApp <a href="' + waLink('Hi Tanya!') + '" target="_blank" rel="noopener">' + PHONE + '</a> · Durban North, KwaZulu-Natal</p>' +
+      '<p class="contact">WhatsApp <a href="' + waLink('Hi Tanya!') + '" target="_blank" rel="noopener">' + PHONE + '</a> · ' + esc(PLACE) + '</p>' +
       '<p class="copy">© ' + new Date().getFullYear() + ' Tanya Streak Art · <a href="/unsubscribe/">Unsubscribe</a></p>' +
       '</div></footer>' +
       '<a class="wa-float" href="' + waLink('Hi Tanya! I found your website and have a question.') + '" target="_blank" rel="noopener" aria-label="Message Tanya on WhatsApp">' + ICON.wa + '</a>';

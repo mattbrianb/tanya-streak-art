@@ -8,10 +8,11 @@ export async function onRequestPost({ request, env }) {
   const fails = parseInt(await env.IMAGES.get(bucket) || '0', 10);
   if (fails >= 8) return error(429, 'Too many wrong tries. Please wait 15 minutes and try again.');
   const body = await readJson(request);
-  if (!(await checkPassword(env, body?.password))) {
+  const user = await checkPassword(env, body?.password);
+  if (!user) {
     await env.IMAGES.put(bucket, String(fails + 1), { expirationTtl: 900 });
     return error(401, 'That password is not right. Please try again.');
   }
   if (fails) await env.IMAGES.delete(bucket);
-  return json({ ok: true }, { headers: { 'set-cookie': await sessionCookie(env, request) } });
+  return json({ ok: true, user }, { headers: { 'set-cookie': await sessionCookie(env, request, user) } });
 }

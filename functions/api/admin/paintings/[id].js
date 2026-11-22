@@ -2,7 +2,7 @@
 // PUT    /api/admin/paintings/:id   (any subset of fields; e.g. { status: 'sold' })
 // DELETE /api/admin/paintings/:id   (removes its photos too)
 import { json, error, readJson, uniqueSlug, loadPaintings } from '../../../../lib/util.js';
-import { validatePainting, deleteImages, resolveReveal } from '../../../../lib/paintings.js';
+import { validatePainting, deleteImages, resolveReveal, applyFeature } from '../../../../lib/paintings.js';
 
 async function byId(env, id) {
   const row = await env.DB.prepare('SELECT * FROM paintings WHERE id = ?').bind(id).first();
@@ -20,8 +20,10 @@ export async function onRequestPut({ request, env, params }) {
   const id = Number(params.id);
   const current = await env.DB.prepare('SELECT * FROM paintings WHERE id = ?').bind(id).first();
   if (!current) return error(404, 'That painting no longer exists.');
-  const { values: v, error: msg } = validatePainting({ kind: current.kind, ...(await readJson(request)) }, true);
+  const body = (await readJson(request)) || {};
+  const { values: v, error: msg } = validatePainting({ kind: current.kind, ...body }, true);
   if (msg) return error(400, msg);
+  if (current.kind !== 'commission' && 'feature' in body) await applyFeature(env, id, !!body.feature);
   if (v.kind === current.kind) delete v.kind;
   await resolveReveal(env, v);
   if (!Object.keys(v).length) return json({ painting: await byId(env, id) });

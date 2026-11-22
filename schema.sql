@@ -19,7 +19,10 @@ CREATE TABLE IF NOT EXISTS paintings (
   kind        TEXT    NOT NULL DEFAULT 'painting'   -- 'commission' = a finished commission (flip-through only)
               CHECK (kind IN ('painting', 'commission')),
   christmas   INTEGER NOT NULL DEFAULT 0,    -- 1 = in the Christmas collection on the home page
-  reveal_at   TEXT                           -- UTC 'YYYY-MM-DDTHH:MM:SSZ': wrapped until then; NULL = shown now
+  reveal_at   TEXT,                          -- UTC 'YYYY-MM-DDTHH:MM:SSZ': wrapped until then; NULL = shown now
+  room        TEXT,                          -- room photo for the "in a room" preview; NULL = automatic
+  wall        TEXT,                          -- starting wall in "View on a wall"; NULL = automatic
+  frame       TEXT                           -- starting frame there; NULL = automatic
 );
 
 CREATE TABLE IF NOT EXISTS images (

@@ -1,7 +1,8 @@
 // GET /api/admin/me → 200 when signed in (the middleware returns 401 otherwise), plus dashboard counts.
 import { json } from '../../../lib/util.js';
+import { USERS } from '../../../lib/auth.js';
 
-export async function onRequestGet({ env }) {
+export async function onRequestGet({ env, data }) {
   const counts = await env.DB.prepare(`SELECT
     (SELECT COUNT(*) FROM paintings WHERE kind = 'painting' AND status = 'available') AS available,
     (SELECT COUNT(*) FROM paintings WHERE kind = 'painting' AND status = 'sold')      AS sold,
@@ -10,5 +11,6 @@ export async function onRequestGet({ env }) {
     (SELECT COUNT(*) FROM paintings WHERE kind = 'commission' AND status = 'hidden')  AS commissions_hidden,
     (SELECT COUNT(*) FROM subscribers)                          AS subscribers,
     (SELECT COUNT(*) FROM subscribers WHERE created_at >= datetime('now', '-7 days')) AS new_subscribers`).first();
-  return json({ ok: true, counts });
+  const user = data.user || 'tanya';
+  return json({ ok: true, user, name: USERS[user].name, counts });
 }

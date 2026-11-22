@@ -3,8 +3,9 @@
 import { error } from '../../../lib/util.js';
 import { isSignedIn } from '../../../lib/auth.js';
 
-export async function onRequest({ request, env, next }) {
-  if (!(await isSignedIn(env, request))) {
+export async function onRequest({ request, env, next, data }) {
+  const user = await isSignedIn(env, request);
+  if (!user) {
     if (request.method === 'GET' && new URL(request.url).searchParams.get('format') === 'csv') {
       return Response.redirect(new URL('/portal/#/subscribers', request.url).href, 302);
     }
@@ -13,5 +14,6 @@ export async function onRequest({ request, env, next }) {
   if (request.method !== 'GET' && request.headers.get('x-requested-with') !== 'portal') {
     return error(403, 'Request blocked.');
   }
+  data.user = user;          // 'tanya' or 'matt', for routes that care who is signed in
   return next();
 }
