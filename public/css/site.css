@@ -258,6 +258,7 @@ details.fold div{padding:0 0 18px;color:var(--ink-soft);font-size:15px}
 a.frame:hover .room,a.frame:focus-visible .room{opacity:1}
 .has-room .pill{z-index:4}
 .room-in{position:absolute;top:0;height:100%;width:calc(var(--a) * 100%);left:clamp(calc(100% - var(--a) * 100%),calc(50% - var(--px) * var(--a) * 100%),0%);container-type:inline-size}
+.room-z{position:absolute;inset:0;display:block}
 .room-bg{position:absolute;inset:0;width:100%;height:100%;max-width:none;object-fit:cover}
 .room-art{position:absolute;box-sizing:border-box;background:#C9A27A;box-shadow:calc(var(--sx) * .5cqw) 1cqw 1.8cqw -.3cqw rgba(30,20,10,.38),calc(var(--sx) * .15cqw) .25cqw .4cqw rgba(30,20,10,.25)}
 .room-art img{display:block;width:100%;height:100%;max-width:none;object-fit:cover}

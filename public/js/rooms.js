@@ -83,14 +83,26 @@
   }
 
   // Markup for the room layer. Positions are % of the photo; the layer is cropped to its box by CSS.
-  function html(p, r, src) {
+  // Small paintings would be a speck in a whole room, so the view steps closer: the photo is zoomed
+  // around the painting until it fills a fair share of the picture (furniture grows with it, so the
+  // size comparison stays true), and the zoom drifts the painting toward the middle without ever
+  // showing past the photo's edges. full = the big view on a painting page; otherwise a square card.
+  function html(p, r, src, full) {
     var z = sizeOf(p), fw = (z.w + 2 * FRAME_CM) * r.s, fh = (z.h + 2 * FRAME_CM) * r.s * r.a;   // fractions of photo w / h
     var left = r.x - fw / 2, top = r.align === 'bottom' ? r.y - fh : r.y - fh / 2;
-    return '<span class="room" style="--a:' + r.a + ';--px:' + r.x + ';--sx:' + r.sx + '" aria-hidden="true">' +
-      '<span class="room-in"><img class="room-bg" src="' + (r.src || '/static/rooms/' + r.id + '.jpg') + '" alt="" loading="lazy" decoding="async">' +
+    var cx = r.x, cy = top + fh / 2;
+    // the painting's bigger side should fill ~28% of the big view, ~38% of a square card
+    var k = full ? .28 / Math.max(fh, fw) : .38 / Math.max(fh, fw * r.a);
+    k = Math.max(1, Math.min(k, 2.6));
+    // zoom origin o (fixed point): pick it so the painting lands near the middle, kept inside 0..1
+    function origin(c) { if (k <= 1.001) return c; var o = (k * c - .5) / (k - 1); return Math.max(0, Math.min(1, o)); }
+    var ox = origin(cx), oy = origin(cy), nx = ox + k * (cx - ox);
+    return '<span class="room" style="--a:' + r.a + ';--px:' + nx.toFixed(4) + ';--sx:' + r.sx + '" aria-hidden="true">' +
+      '<span class="room-in"><span class="room-z" style="transform-origin:' + (ox * 100).toFixed(2) + '% ' + (oy * 100).toFixed(2) + '%;transform:scale(' + k.toFixed(3) + ')">' +
+      '<img class="room-bg" src="' + (r.src || '/static/rooms/' + r.id + '.jpg') + '" alt="" loading="lazy" decoding="async">' +
       '<span class="room-art" style="left:' + (left * 100).toFixed(2) + '%;top:' + (top * 100).toFixed(2) + '%;width:' + (fw * 100).toFixed(2) + '%;height:' + (fh * 100).toFixed(2) + '%;padding:' + (FRAME_CM * r.s * 100).toFixed(3) + '%">' +
       '<img src="' + src + '" alt="" style="filter:brightness(' + r.bright + ')"><span class="room-tint" style="background:' + r.tint + '"></span></span>' +
-      '</span></span>';
+      '</span></span></span>';
   }
 
   // Attach a room layer to an element once its painting photo has loaded.
@@ -109,7 +121,7 @@
   function scene(p, img) {
     var r = pick(p, warmth(img));
     if (!r) return '';
-    return '<div class="room-scene" style="aspect-ratio:' + r.a + '">' + html(p, r, img.currentSrc || img.src).replace('class="room"', 'class="room full"') + '</div>';
+    return '<div class="room-scene" style="aspect-ratio:' + r.a + '">' + html(p, r, img.currentSrc || img.src, true).replace('class="room"', 'class="room full"') + '</div>';
   }
 
   // Tanya's own room photos (from the API) join the stock ones.
