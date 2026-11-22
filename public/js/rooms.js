@@ -50,6 +50,11 @@
   // Pick the room: it must fit the painting; prefer contrast in warmth and a wall that suits its size.
   // The choice depends only on the painting, so it gets the same room on every page.
   function fits(r, z) { return !(z.w > r.maxW || z.h > r.maxH); }
+  // How much of the photo the framed painting covers (its bigger side, as a fraction), and the zoom limits.
+  // The room is only a backdrop if you can still see the room, so the view never steps in further than ZMAX;
+  // a painting goes only into rooms where, at that zoom, it still covers at least SEEN of the picture.
+  var ZMAX = 1.6, SEEN = .2;
+  function cover(r, z) { return Math.max((z.h + 2 * FRAME_CM) * r.s * r.a, (z.w + 2 * FRAME_CM) * r.s); }
   // Pick the room. Tanya's own choice wins (if the painting fits that wall). Otherwise every room the
   // painting fits is scored on: a wall that suits its size, a wall that suits its shape (landscape over
   // sofas and sideboards, tall works in narrower spots), and a gentle warm/cool contrast. One of the best
@@ -64,6 +69,7 @@
     ROOMS.forEach(function (r) {
       if (r.auto === false) return;                              // Tanya's photo, kept for paintings she picks it for
       if (!fits(r, z) || (r.minL && long < r.minL)) return;
+      if (cover(r, z) * ZMAX < SEEN) return;                     // it would be a speck in this room
       var ratio = long / r.ideal;
       if (ratio < .36) return;                                   // would look lost on that wall
       var wall = r.maxW / r.maxH;                                 // >1: a wide wall, <1: a tall spot
@@ -91,9 +97,10 @@
     var z = sizeOf(p), fw = (z.w + 2 * FRAME_CM) * r.s, fh = (z.h + 2 * FRAME_CM) * r.s * r.a;   // fractions of photo w / h
     var left = r.x - fw / 2, top = r.align === 'bottom' ? r.y - fh : r.y - fh / 2;
     var cx = r.x, cy = top + fh / 2;
-    // the painting's bigger side should fill ~28% of the big view, ~38% of a square card
-    var k = full ? .28 / Math.max(fh, fw) : .38 / Math.max(fh, fw * r.a);
-    k = Math.max(1, Math.min(k, 2.6));
+    // step in just enough for the painting's bigger side to cover ~26% of the big view (~34% of a square
+    // card, which already shows only a slice of the room), never more than ZMAX so the room stays in view
+    var k = full ? .26 / Math.max(fh, fw) : .34 / Math.max(fh, fw * r.a);
+    k = Math.max(1, Math.min(k, ZMAX));
     // zoom origin o (fixed point): pick it so the painting lands near the middle, kept inside 0..1
     function origin(c) { if (k <= 1.001) return c; var o = (k * c - .5) / (k - 1); return Math.max(0, Math.min(1, o)); }
     var ox = origin(cx), oy = origin(cy), nx = ox + k * (cx - ox);
