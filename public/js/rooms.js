@@ -14,7 +14,7 @@
     { id: 'grey-sofa', name: 'Above a grey sofa',         a: 1.7778, x: .36,  y: .34,  align: 'bottom', s: .0032,  maxW: 150, maxH: 58,  temp: -1, sx: 0,   tint: 'rgba(200,205,210,.06)', ideal: 100, bright: 1 },
     { id: 'oak-sideboard', name: 'Above an oak sideboard',     a: 1.7778, x: .24,  y: .47,  align: 'bottom', s: .0033,  maxW: 120, maxH: 75,  temp: 0,  sx: 0,   tint: 'rgba(240,230,215,.06)', ideal: 65, bright: 1 },
     { id: 'sofa-corner', name: 'Sofa corner',       a: 1.4995, x: .30,  y: .30,  align: 'center', s: .0026,  maxW: 110, maxH: 100, temp: 0,  sx: -.5, tint: 'rgba(240,235,225,.04)', ideal: 75, bright: 1 },
-    { id: 'sage-cabinet', name: 'On a sage cabinet',      a: 1.4995, x: .545, y: .37,  align: 'bottom', s: .0049,  maxW: 120, maxH: 48,  temp: -1, sx: 1,   tint: 'rgba(170,185,170,.10)', ideal: 40, bright: .97 },
+    { id: 'sage-cabinet', name: 'On a sage cabinet',      a: 1.4995, x: .63,  y: .57,   align: 'bottom', s: .0049,  maxW: 120, maxH: 48,  temp: -1, sx: 1,   tint: 'rgba(170,185,170,.10)', ideal: 40, bright: .97 },
     { id: 'fluted-dresser', name: 'Above a fluted dresser',    a: 1.7778, x: .67,  y: .466, align: 'bottom', s: .0030,  maxW: 150, maxH: 85,  temp: 1,  sx: 1,   tint: 'rgba(235,215,185,.10)', ideal: 80, bright: .98 },
     { id: 'cream-mantel', name: 'Cream mantelpiece',      a: 1.7563, x: .67,  y: .79,  align: 'bottom', s: .0055,  maxW: 72,  maxH: 70,  temp: 1,  sx: 1,   tint: 'rgba(235,220,195,.10)', ideal: 45, bright: .98 },
     { id: 'sunlit-shelf', name: 'Sunlit shelf',      a: 1.3093, x: .77,  y: .40,  align: 'center', s: .009,   maxW: 34,  maxH: 45,  temp: 1,  sx: 1,   tint: 'rgba(240,180,110,.18)', ideal: 25, bright: .95 },
@@ -107,7 +107,7 @@
     var ox = origin(cx, .5), oy = origin(cy, .36), nx = ox + k * (cx - ox);
     return '<span class="room" style="--a:' + r.a + ';--px:' + nx.toFixed(4) + ';--sx:' + r.sx + '" aria-hidden="true">' +
       '<span class="room-in"><span class="room-z" style="transform-origin:' + (ox * 100).toFixed(2) + '% ' + (oy * 100).toFixed(2) + '%;transform:scale(' + k.toFixed(3) + ')">' +
-      '<img class="room-bg" src="' + (r.src || '/static/rooms/' + r.id + '.jpg') + '" alt="" loading="lazy" decoding="async">' +
+      '<img class="room-bg" src="' + (r.src || '/static/rooms/' + r.id + '.jpg') + '" alt="" loading="lazy" decoding="async" onload="Rooms.light(this)">' +
       '<span class="room-art" style="left:' + (left * 100).toFixed(2) + '%;top:' + (top * 100).toFixed(2) + '%;width:' + (fw * 100).toFixed(2) + '%;height:' + (fh * 100).toFixed(2) + '%;padding:' + (FRAME_CM * r.s * 100).toFixed(3) + '%">' +
       '<img src="' + src + '" alt="" style="filter:brightness(' + r.bright + ')"><span class="room-tint" style="background:' + r.tint + '"></span></span>' +
       '</span></span></span>';
@@ -132,9 +132,64 @@
     return '<div class="room-scene" style="aspect-ratio:' + r.a + '">' + html(p, r, img.currentSrc || img.src, true).replace('class="room"', 'class="room full"') + '</div>';
   }
 
+  // ---------- light the painting like the room ----------
+  // Reads the wall around the painting in the room photo: how bright it is, the colour of the light, and
+  // which side is brighter. The painting and its frame then get the same brightness and colour cast, a soft
+  // light-to-shade gradient across them, and a shadow falling away from the light, so they sit in the photo
+  // instead of floating on top of it. Works for Tanya's own room photos too. Measured once per photo spot.
+  var lightCache = {};
+  function avg(d, W, H, x0, y0, x1, y1) {
+    x0 = Math.max(0, Math.floor(x0 * W)); x1 = Math.min(W, Math.ceil(x1 * W));
+    y0 = Math.max(0, Math.floor(y0 * H)); y1 = Math.min(H, Math.ceil(y1 * H));
+    var r = 0, g = 0, b = 0, n = 0;
+    for (var y = y0; y < y1; y++) for (var x = x0; x < x1; x++) {
+      var i = (y * W + x) * 4; r += d[i]; g += d[i + 1]; b += d[i + 2]; n++;
+    }
+    return n ? [r / n / 255, g / n / 255, b / n / 255] : null;
+  }
+  var lum = function (c) { return .2126 * c[0] + .7152 * c[1] + .0722 * c[2]; };
+  function measure(bg, box) {
+    var key = bg.currentSrc + '|' + box.join(',');
+    if (lightCache[key]) return lightCache[key];
+    var W = 96, H = Math.max(8, Math.round(96 * bg.naturalHeight / bg.naturalWidth));
+    var c = document.createElement('canvas'); c.width = W; c.height = H;
+    var g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(bg, 0, 0, W, H);
+    var d = g.getImageData(0, 0, W, H).data;
+    var L = box[0], T = box[1], w = box[2], h = box[3], m = Math.max(w, h) * .55;
+    var left = avg(d, W, H, L - m, T, L, T + h), right = avg(d, W, H, L + w, T, L + w + m, T + h);
+    var top = avg(d, W, H, L - m * .5, T - m, L + w + m * .5, T);
+    var parts = [left, right, top].filter(Boolean);
+    if (!parts.length) return null;
+    var wall = [0, 1, 2].map(function (k) { return parts.reduce(function (t, p) { return t + p[k]; }, 0) / parts.length; });
+    var Lw = lum(wall), Ll = left ? lum(left) : Lw, Lr = right ? lum(right) : Lw, mx = Math.max(Ll, Lr, .01);
+    var out = {
+      bright: Math.max(.5, Math.min(1.06, Lw / .86)),                       // a well-lit white wall ≈ 0.86
+      cast: wall.map(function (v) { return 1 - (1 - v / Math.max(wall[0], wall[1], wall[2], .01)) * .75; }),
+      shadeL: Math.min(.35, (1 - Ll / mx) * 1.1), shadeR: Math.min(.35, (1 - Lr / mx) * 1.1),
+      sx: Math.max(-1, Math.min(1, (Ll - Lr) * 9))                          // brighter left → shadow falls right
+    };
+    return (lightCache[key] = out);
+  }
+  function light(bg) {
+    var z = bg.parentNode, art = z && z.querySelector('.room-art'), room = z && z.closest('.room');
+    if (!art || !bg.naturalWidth) return;
+    var st = art.style, box = [st.left, st.top, st.width, st.height].map(function (v) { return parseFloat(v) / 100; });
+    var L;
+    try { L = measure(bg, box); } catch (e) { return; }                        // photo from another site: leave as is
+    if (!L) return;
+    var img = art.querySelector('img'), tint = art.querySelector('.room-tint');
+    art.style.filter = 'brightness(' + L.bright.toFixed(3) + ') contrast(.96) saturate(.94)';
+    if (img) img.style.filter = '';
+    if (tint) {
+      var c = L.cast.map(function (v) { return Math.round(v * 255); }).join(',');
+      tint.style.background = 'linear-gradient(to right, rgba(0,0,0,' + L.shadeL.toFixed(3) + '), rgba(0,0,0,0) 45%, rgba(0,0,0,0) 55%, rgba(0,0,0,' + L.shadeR.toFixed(3) + ')), rgb(' + c + ')';
+    }
+    if (room) room.style.setProperty('--sx', L.sx.toFixed(2));
+  }
+
   // Tanya's own room photos (from the API) join the stock ones.
   function add(list) {
     (list || []).forEach(function (r) { if (!ROOMS.some(function (x) { return x.id === r.id; })) ROOMS.push(r); });
   }
-  window.Rooms = { attach: attach, scene: scene, list: ROOMS, fits: fits, add: add };
+  window.Rooms = { attach: attach, scene: scene, list: ROOMS, fits: fits, add: add, light: light };
 })();
