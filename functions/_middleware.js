@@ -14,6 +14,7 @@ async function siteText(env) {
 
 const HOME = 'https://www.tanyastreakart.co.za';
 const BOOT = Date.now().toString(36);   // fallback release stamp when the commit isn't known
+const CLARITY = `<script type="text/javascript">(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);})(window,document,"clarity","script","ziqtye9u9j");</script>`;
 
 export async function onRequest(ctx) {
   const url = new URL(ctx.request.url);
@@ -33,6 +34,9 @@ export async function onRequest(ctx) {
     .on('script[src^="/js/"], script[src^="/portal/"]', stamp('src'))
     .on('link[rel="stylesheet"][href^="/css/"], link[rel="stylesheet"][href^="/portal/"]', stamp('href'));
   if (url.pathname.startsWith('/portal')) return versioned.transform(res);
+
+  // Microsoft Clarity visitor analytics: public pages only, so the portal stays out of the stats.
+  versioned.on('head', { element(el) { el.append(CLARITY, { html: true }); } });
 
   let s;
   try { s = await siteText(ctx.env); } catch { return versioned.transform(res); }
