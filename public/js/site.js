@@ -323,6 +323,12 @@
     else {
       var io = new IntersectionObserver(function (es) {
         es.filter(function (e) { return e.isIntersecting; }).forEach(function (e, k) { io.unobserve(e.target); unwrap(e.target.closest('.xg-gift'), k); });
+        // a quick flick can carry a present past the screen without it ever counting as "in view":
+        // anything already scrolled past opens too
+        opened.forEach(function (g) {
+          var b = g.querySelector('.xg-box');
+          if (!g.classList.contains('open') && b.getBoundingClientRect().bottom < 0) { io.unobserve(b); g.classList.add('open'); }
+        });
       }, { rootMargin: '0px 0px -20% 0px' });   // any part of the box above the bottom fifth of the screen, whatever its size
       opened.forEach(function (g) { io.observe(g.querySelector('.xg-box')); });
     }
