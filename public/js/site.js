@@ -313,13 +313,19 @@
     var still = matchMedia('(prefers-reduced-motion: reduce)').matches;
     stringLights(el.querySelector('.xg-string'));
     var fx = sparkle(el, el.querySelector('.xg-fx'), still);
-    function open() {
-      opened.forEach(function (g, i) {
-        setTimeout(function () { g.classList.add('open'); fx.burst(g.querySelector('.xg-box')); }, still ? 0 : 350 + i * 480);
-      });
+    // Each present opens by itself as it comes into view (presents that arrive together ripple open a
+    // moment apart). Watching each one, not the whole grid, matters on phones, where the grid is one
+    // column many screens tall and would never be "30% visible" at once.
+    function unwrap(g, k) {
+      setTimeout(function () { g.classList.add('open'); fx.burst(g.querySelector('.xg-box')); }, still ? 0 : 120 + k * 220);
     }
-    if (!('IntersectionObserver' in window)) open();
-    else { var io = new IntersectionObserver(function (es) { if (es[0].isIntersecting) { open(); io.disconnect(); } }, { threshold: .3 }); io.observe(el.querySelector('.xg-grid')); }
+    if (!('IntersectionObserver' in window)) opened.forEach(unwrap);
+    else {
+      var io = new IntersectionObserver(function (es) {
+        es.filter(function (e) { return e.isIntersecting; }).forEach(function (e, k) { io.unobserve(e.target); unwrap(e.target.closest('.xg-gift'), k); });
+      }, { rootMargin: '0px 0px -20% 0px' });   // any part of the box above the bottom fifth of the screen, whatever its size
+      opened.forEach(function (g) { io.observe(g.querySelector('.xg-box')); });
+    }
     return true;
   }
 
